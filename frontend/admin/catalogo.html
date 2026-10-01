@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catálogo · Panadería POS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div>
+          <h1>Catálogo de productos</h1>
+          <div class="subtitle" id="conteo"></div>
+        </div>
+        <button class="btn btn-primary" id="nuevo">+ Nuevo producto</button>
+      </div>
+
+      <div id="mensaje" class="alert hidden" role="status"></div>
+
+      <div class="card">
+        <div class="toolbar" style="margin-bottom:14px">
+          <input type="search" id="buscar" placeholder="Buscar producto…" style="min-width:220px">
+          <select id="filtro-estado">
+            <option value="">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </select>
+          <select id="filtro-tipo">
+            <option value="">Por unidad y por peso</option>
+            <option value="unidad">Por unidad</option>
+            <option value="peso">Por peso</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Producto</th><th class="num">Precio</th><th>Tipo de venta</th><th>Estado</th><th class="num">Acciones</th></tr>
+            </thead>
+            <tbody id="tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modal">
+    <form class="card modal" id="form" novalidate>
+      <h2 id="form-titulo">Nuevo producto</h2>
+      <div class="field">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" required maxlength="80">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="tipo_venta">Tipo de venta</label>
+          <select id="tipo_venta">
+            <option value="unidad">Por unidad</option>
+            <option value="peso">Por peso (kg)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="precio" id="precio-label">Precio por unidad (€)</label>
+          <input id="precio" type="number" min="0.01" step="0.01" required>
+        </div>
+      </div>
+      <div id="form-error" class="alert hidden" role="alert"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="guardar">Guardar</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/catalogo.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+// Generado por Ansible (deploy/ansible/dns.yml)
+options {
+    directory "/var/cache/bind";
+
+    listen-on { any; };
+    listen-on-v6 { none; };
+
+    // Solo responde por la zona propia; no resuelve dominios de internet.
+    recursion no;
+    allow-query { any; };
+
+    dnssec-validation no;
+};

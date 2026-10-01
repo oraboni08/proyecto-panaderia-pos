@@ -1,4 +1,21 @@
+# Entornos virtuales
 venv/
+.venv/
+
+# Python
 __pycache__/
+*.pyc
+.pytest_cache/
+
+# Bases de datos locales (se crean solas al iniciar cada servicio)
+*.db
 *.sqlite
+# ...excepto las bases iniciales de referencia, que sí se entregan
+!backend/database/*.db
+
+# Vagrant
+.vagrant/
+
+# Sistema
 .DS_Store
+Thumbs.db
