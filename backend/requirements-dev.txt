@@ -1,0 +1,5 @@
+# Todo lo necesario para desarrollar y probar los tres servicios en un solo entorno virtual.
+-r auth-service/requirements.txt
+-r catalog-service/requirements.txt
+-r sales-service/requirements.txt
+pytest==9.1.1
