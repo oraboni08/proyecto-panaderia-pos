@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Historial · Panadería POS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div>
+          <h1>Historial de cambios</h1>
+          <div class="subtitle">Quién cambió qué en el catálogo, y cuándo. Este registro no se puede modificar.</div>
+        </div>
+        <div class="toolbar">
+          <select id="producto" aria-label="Filtrar por producto">
+            <option value="">Todos los productos</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="error" class="alert hidden" role="alert"></div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Fecha</th><th>Producto</th><th>Acción</th><th>Campo</th><th>Antes</th><th></th><th>Después</th><th>Usuario</th></tr>
+            </thead>
+            <tbody id="tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/historial.js"></script>
+</body>
+</html>

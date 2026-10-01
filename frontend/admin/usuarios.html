@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usuarios · Panadería POS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div>
+          <h1>Usuarios</h1>
+          <div class="subtitle">Personas que pueden entrar al sistema.</div>
+        </div>
+        <button class="btn btn-primary" id="nuevo">+ Nuevo usuario</button>
+      </div>
+
+      <div id="mensaje" class="alert hidden" role="status"></div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Creado</th><th class="num">Acción</th></tr></thead>
+            <tbody id="tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modal">
+    <form class="card modal" id="form" novalidate>
+      <h2>Nuevo usuario</h2>
+      <div class="field">
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" required maxlength="80" placeholder="Ej. Juan Pérez">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="usuario">Usuario</label>
+          <input id="usuario" required maxlength="30" placeholder="Ej. juan" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="rol">Rol</label>
+          <select id="rol">
+            <option value="cajero">Cajero</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" type="password" required minlength="8" autocomplete="new-password">
+        <div class="hint">Mínimo 8 caracteres.</div>
+      </div>
+      <div id="form-error" class="alert hidden" role="alert"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="guardar">Crear usuario</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/usuarios.js"></script>
+</body>
+</html>
