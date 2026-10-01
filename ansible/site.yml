@@ -1,0 +1,8 @@
+---
+# Punto de entrada del despliegue (como ansible/site.yml del ejemplo de clase).
+# Vagrant lo ejecuta dentro de cada máquina; cada play se aplica solo a la
+# máquina con ese nombre.
+
+- import_playbook: dns.yml     # dns-vm   → BIND9, zona panaderia-pos.test
+- import_playbook: back.yml    # back-vm  → microservicios + Nginx (API Gateway)
+- import_playbook: front.yml   # front-vm → Nginx + front-end
