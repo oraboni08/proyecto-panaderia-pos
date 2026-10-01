@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · Panadería POS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard de ventas</h1>
+          <div class="subtitle" id="periodo">Todas las ventas</div>
+        </div>
+        <form class="date-filter" id="filtro">
+          <span aria-hidden="true">📅</span>
+          <input type="date" id="desde" aria-label="Desde">
+          <span>–</span>
+          <input type="date" id="hasta" aria-label="Hasta">
+          <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="limpiar">Ver todo</button>
+        </form>
+      </div>
+
+      <div id="error" class="alert hidden" role="alert"></div>
+
+      <section class="kpis">
+        <div class="card kpi"><div class="kpi-icon">💶</div><div class="kpi-label">Ingresos totales</div><div class="kpi-value" id="kpi-ingresos">—</div></div>
+        <div class="card kpi"><div class="kpi-icon">🛒</div><div class="kpi-label">Número de ventas</div><div class="kpi-value" id="kpi-ventas">—</div></div>
+        <div class="card kpi"><div class="kpi-icon">🥖</div><div class="kpi-label">Unidades vendidas</div><div class="kpi-value" id="kpi-unidades">—</div><div class="kpi-extra" id="kpi-kg"></div></div>
+        <div class="card kpi"><div class="kpi-icon">🧾</div><div class="kpi-label">Ticket promedio</div><div class="kpi-value" id="kpi-ticket">—</div></div>
+        <div class="card kpi"><div class="kpi-icon">👥</div><div class="kpi-label">Clientes activos</div><div class="kpi-value" id="kpi-clientes">—</div></div>
+      </section>
+
+      <section class="grid-2">
+        <div class="card">
+          <h2>Ventas por día de la semana</h2>
+          <div class="chart-box"><canvas id="chart-dias"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h2>Top productos</h2>
+            <select id="orden-productos" style="width:auto">
+              <option value="ingresos">Por ingresos</option>
+              <option value="cantidad">Por cantidad</option>
+            </select>
+          </div>
+          <div class="chart-box"><canvas id="chart-productos"></canvas></div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="card">
+          <h2>Top clientes</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cliente</th><th class="num">Compras</th><th class="num">Gasto</th></tr></thead>
+              <tbody id="tabla-clientes"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <h2 id="titulo-sin-ventas">Productos sin ventas</h2>
+          <div class="table-wrap table-scroll">
+            <table>
+              <thead><tr><th>Producto</th><th class="num">Precio</th><th></th></tr></thead>
+              <tbody id="tabla-sin-ventas"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/vendor/chart.umd.min.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
