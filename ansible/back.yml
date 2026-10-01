@@ -1,0 +1,142 @@
+# Servidor del back-end: tres microservicios FastAPI (systemd) detrás de Nginx como API Gateway.
+- name: Configurar back-vm (microservicios + API Gateway)
+  hosts: back-vm
+  become: true
+
+  tasks:
+    - name: Zona horaria (las "ventas de hoy" dependen de la hora local)
+      ansible.builtin.command: timedatectl set-timezone {{ timezone }}
+      changed_when: false
+
+    - name: Instalar Python, Nginx y rsync
+      ansible.builtin.apt:
+        name: [python3, python3-venv, python3-pip, nginx, rsync]
+        state: present
+        update_cache: true
+
+    - name: Usuario del sistema que ejecuta los servicios
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+
+    - name: Carpetas de la aplicación, datos y configuración
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.owner }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ app_dir }}", owner: root, mode: "0755" }
+        - { path: "{{ venv_dir }}", owner: root, mode: "0755" }
+        - { path: "{{ data_dir }}", owner: "{{ app_user }}", mode: "0750" }
+        - { path: "{{ config_dir }}", owner: root, mode: "0755" }
+
+    - name: Copiar el dataset
+      ansible.builtin.command: >
+        rsync -a --delete /vagrant/backend/dataset/ {{ app_dir }}/dataset/
+      changed_when: true
+
+    - name: Copiar el código de cada microservicio (sin pruebas ni bases locales)
+      ansible.builtin.command: >
+        rsync -a --delete
+        --exclude '__pycache__' --exclude '*.db' --exclude 'tests' --exclude '.pytest_cache'
+        /vagrant/backend/{{ item.name }}/ {{ app_dir }}/{{ item.name }}/
+      loop: "{{ services }}"
+      changed_when: true
+      notify: Reiniciar microservicios
+
+    - name: Entorno virtual e instalación de dependencias de cada microservicio
+      ansible.builtin.pip:
+        requirements: "{{ app_dir }}/{{ item.name }}/requirements.txt"
+        virtualenv: "{{ venv_dir }}/{{ item.name }}"
+        virtualenv_command: python3 -m venv
+      loop: "{{ services }}"
+      notify: Reiniciar microservicios
+
+    - name: Generar (una sola vez) la clave secreta compartida para firmar los tokens JWT
+      ansible.builtin.shell: >
+        test -f {{ config_dir }}/jwt_secret ||
+        (python3 -c "import secrets; print(secrets.token_urlsafe(48))" > {{ config_dir }}/jwt_secret &&
+        chmod 600 {{ config_dir }}/jwt_secret)
+      args:
+        creates: "{{ config_dir }}/jwt_secret"
+
+    - name: Leer la clave secreta
+      ansible.builtin.slurp:
+        src: "{{ config_dir }}/jwt_secret"
+      register: jwt_secret_file
+
+    - name: Variables de entorno de cada microservicio (solo legibles por el servicio)
+      ansible.builtin.template:
+        src: templates/service.env.j2
+        dest: "{{ config_dir }}/{{ item.name }}.env"
+        owner: root
+        group: "{{ app_user }}"
+        mode: "0640"
+      loop: "{{ services }}"
+      vars:
+        jwt_secret: "{{ jwt_secret_file.content | b64decode | trim }}"
+      notify: Reiniciar microservicios
+
+    - name: Copiar el servicio systemd de cada microservicio (carpeta systemd/)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../systemd/panaderia-{{ item.name }}.service"
+        dest: /etc/systemd/system/panaderia-{{ item.name }}.service
+        mode: "0644"
+      loop: "{{ services }}"
+      notify: Reiniciar microservicios
+
+    - name: Encender y habilitar los microservicios
+      ansible.builtin.systemd:
+        name: panaderia-{{ item.name }}
+        state: started
+        enabled: true
+        daemon_reload: true
+      loop: "{{ services }}"
+
+    - name: Configuración de Nginx como API Gateway
+      ansible.builtin.template:
+        src: templates/nginx-gateway.conf.j2
+        dest: /etc/nginx/sites-available/panaderia-api
+        mode: "0644"
+      notify: Recargar Nginx
+
+    - name: Activar el sitio del gateway
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/panaderia-api
+        dest: /etc/nginx/sites-enabled/panaderia-api
+        state: link
+      notify: Recargar Nginx
+
+    - name: Quitar el sitio por defecto de Nginx
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Recargar Nginx
+
+  handlers:
+    - name: Reiniciar microservicios
+      ansible.builtin.systemd:
+        name: panaderia-{{ item.name }}
+        state: restarted
+        daemon_reload: true
+      loop: "{{ services }}"
+
+    - name: Recargar Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+  post_tasks:
+    - name: Comprobar que cada microservicio responde a través del gateway
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/api/v1/{{ item.name | replace('-service', '') }}/health"
+        headers:
+          Host: "api.{{ domain }}"
+      register: health
+      until: health.status == 200
+      retries: 10
+      delay: 3
+      loop: "{{ services }}"

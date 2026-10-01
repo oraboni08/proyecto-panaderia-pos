@@ -1,0 +1,26 @@
+# Variables compartidas por los tres playbooks.
+
+domain: panaderia-pos.test
+
+dns_ip: 192.168.56.10
+front_ip: 192.168.56.11
+back_ip: 192.168.56.12
+
+timezone: America/Bogota
+
+app_user: panaderia
+app_dir: /opt/panaderia-pos
+venv_dir: /opt/panaderia-pos/venvs
+data_dir: /var/lib/panaderia-pos
+config_dir: /etc/panaderia-pos
+web_root: /var/www/panaderia-pos
+
+services:
+  - { name: auth-service,    port: 8001, db: auth.db }
+  - { name: catalog-service, port: 8002, db: catalog.db }
+  - { name: sales-service,   port: 8003, db: sales.db }
+
+# Contraseñas de los usuarios iniciales (RN21). Solo se usan la primera vez,
+# cuando la base de datos de auth-service está vacía. Cámbienlas antes de la sustentación.
+admin_password: admin12345
+cajero_password: cajero12345

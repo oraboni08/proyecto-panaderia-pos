@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Venta · Panadería POS</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="logo">🥐</div><span>Panadería POS</span></div>
+    <div class="topbar-user">
+      <span>Cajero: <span id="cajero-nombre"></span></span>
+      <button class="btn btn-outline" id="logout">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="pos-layout">
+    <!-- Registrar venta -->
+    <section class="card">
+      <h2>Registrar venta</h2>
+
+      <div class="section-title">Cliente</div>
+      <div class="customer-box">
+        <div class="customer-selected" id="cliente-seleccionado">
+          <div class="who" id="cliente-texto">Consumidor final <small>#0</small></div>
+          <div>
+            <button class="btn btn-ghost btn-sm" id="cambiar-cliente">Cambiar</button>
+            <button class="btn btn-ghost btn-sm hidden" id="quitar-cliente" title="Volver a Consumidor final">✕</button>
+          </div>
+        </div>
+
+        <div id="buscador-cliente" class="hidden">
+          <input type="search" id="buscar-cliente" placeholder="Número o nombre del cliente…" autocomplete="off">
+          <div class="results hidden" id="resultados-cliente"></div>
+          <button class="btn btn-ghost btn-sm" id="abrir-nuevo-cliente" style="margin-top:6px">+ Cliente nuevo</button>
+          <form class="inline-form hidden" id="form-cliente" novalidate>
+            <input id="nuevo-cliente-nombre" placeholder="Nombre del cliente nuevo" maxlength="80">
+            <button class="btn btn-primary btn-sm" type="submit">Guardar</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="section-title">Agregar producto</div>
+      <form class="add-row" id="form-agregar" novalidate>
+        <div>
+          <label for="producto">Producto</label>
+          <select id="producto"></select>
+        </div>
+        <div>
+          <label for="cantidad" id="cantidad-label">Unidades</label>
+          <input id="cantidad" type="number" min="1" step="1" value="1">
+        </div>
+        <button class="btn btn-accent" type="submit">Agregar</button>
+      </form>
+      <div class="hint" id="producto-info"></div>
+
+      <div class="section-title">Carrito</div>
+      <div class="table-wrap">
+        <table class="cart">
+          <thead><tr><th>Producto</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Subtotal</th><th></th></tr></thead>
+          <tbody id="carrito"></tbody>
+        </table>
+      </div>
+
+      <div class="cart-total"><span>Total</span><span class="amount" id="total">€ 0,00</span></div>
+
+      <div id="mensaje" class="alert hidden" role="alert"></div>
+
+      <button class="btn btn-accent btn-lg" id="cobrar" disabled>Cobrar</button>
+    </section>
+
+    <!-- Ventas de hoy -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Ventas de hoy</h2>
+        <button class="btn btn-ghost btn-sm" id="refrescar" title="Actualizar">↻ Actualizar</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><small>Ventas</small><span class="value" id="hoy-ventas">0</span></div>
+        <div class="stat"><small>Total del día</small><span class="value" id="hoy-total">€ 0,00</span></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Hora</th><th>Cliente</th><th>Productos</th><th class="num">Total</th></tr></thead>
+          <tbody id="ventas-hoy"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Ticket de la venta registrada -->
+  <div class="modal-backdrop hidden" id="modal-ticket">
+    <div class="card modal">
+      <h2>✓ Venta registrada</h2>
+      <div class="hint" id="ticket-encabezado"></div>
+      <div id="ticket-aviso" class="alert alert-warning hidden"></div>
+      <div id="ticket-lineas" style="margin-top:12px"></div>
+      <div class="ticket-total"><span>Total</span><span id="ticket-total"></span></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" data-close>Nueva venta</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/venta.js"></script>
+</body>
+</html>

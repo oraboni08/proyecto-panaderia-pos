@@ -1,0 +1,5 @@
+// Generado por Ansible (deploy/ansible/dns.yml)
+zone "{{ domain }}" {
+    type master;
+    file "/etc/bind/db.{{ domain }}";
+};

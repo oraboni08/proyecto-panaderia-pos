@@ -1,0 +1,19 @@
+; Zona {{ domain }} — generada por Ansible (deploy/ansible/dns.yml)
+$TTL    300
+@       IN      SOA     ns.{{ domain }}. admin.{{ domain }}. (
+                        {{ ansible_date_time.epoch }} ; serial
+                        3600       ; refresh
+                        600        ; retry
+                        86400      ; expire
+                        300 )      ; TTL negativo
+
+@       IN      NS      ns.{{ domain }}.
+
+ns      IN      A       {{ dns_ip }}
+
+; Front-end (front-vm)
+@       IN      A       {{ front_ip }}
+www     IN      A       {{ front_ip }}
+
+; API Gateway y microservicios (back-vm)
+api     IN      A       {{ back_ip }}

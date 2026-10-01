@@ -1,0 +1,19 @@
+# Generado por Ansible (deploy/ansible/front.yml)
+
+server {
+    listen 80 default_server;
+    server_name {{ domain }} www.{{ domain }} {{ front_ip }};
+
+    root {{ web_root }};
+    index index.html;
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # Los archivos JS y CSS no se guardan en caché para ver siempre la última versión.
+    location ~* \.(js|css)$ {
+        add_header Cache-Control "no-cache";
+    }
+}

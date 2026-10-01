@@ -1,0 +1,61 @@
+# Servidor del front-end: Nginx entrega las páginas HTML, CSS y JavaScript.
+- name: Configurar front-vm (Nginx + front-end)
+  hosts: front-vm
+  become: true
+
+  tasks:
+    - name: Zona horaria
+      ansible.builtin.command: timedatectl set-timezone {{ timezone }}
+      changed_when: false
+
+    - name: Instalar Nginx y rsync
+      ansible.builtin.apt:
+        name: [nginx, rsync]
+        state: present
+        update_cache: true
+
+    - name: Carpeta del sitio
+      ansible.builtin.file:
+        path: "{{ web_root }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copiar el front-end
+      ansible.builtin.command: rsync -a --delete /vagrant/frontend/ {{ web_root }}/
+      changed_when: true
+
+    - name: Configuración del sitio en Nginx
+      ansible.builtin.template:
+        src: templates/nginx-front.conf.j2
+        dest: /etc/nginx/sites-available/panaderia-front
+        mode: "0644"
+      notify: Recargar Nginx
+
+    - name: Activar el sitio
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/panaderia-front
+        dest: /etc/nginx/sites-enabled/panaderia-front
+        state: link
+      notify: Recargar Nginx
+
+    - name: Quitar el sitio por defecto de Nginx
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Recargar Nginx
+
+  handlers:
+    - name: Recargar Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+
+  post_tasks:
+    - name: Comprobar que el sitio responde
+      ansible.builtin.uri:
+        url: http://127.0.0.1/
+        headers:
+          Host: "{{ domain }}"
+        return_content: true
+      register: home
+      failed_when: "'Panadería POS' not in home.content"
