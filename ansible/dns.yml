@@ -1,0 +1,52 @@
+# Servidor DNS: resuelve los nombres de la zona panaderia-pos.test.
+- name: Configurar dns-vm (BIND9)
+  hosts: dns-vm
+  become: true
+
+  tasks:
+    - name: Zona horaria
+      ansible.builtin.command: timedatectl set-timezone {{ timezone }}
+      changed_when: false
+
+    - name: Instalar BIND9
+      ansible.builtin.apt:
+        name: [bind9, bind9-utils, dnsutils]
+        state: present
+        update_cache: true
+
+    - name: Opciones del servidor (escuchar en la red privada, sin recursión)
+      ansible.builtin.template:
+        src: templates/named.conf.options.j2
+        dest: /etc/bind/named.conf.options
+        mode: "0644"
+      notify: Reiniciar BIND9
+
+    - name: Declarar la zona panaderia-pos.test
+      ansible.builtin.template:
+        src: templates/named.conf.local.j2
+        dest: /etc/bind/named.conf.local
+        mode: "0644"
+      notify: Reiniciar BIND9
+
+    - name: Archivo de zona con los registros A
+      ansible.builtin.template:
+        src: templates/zona.db.j2
+        dest: /etc/bind/db.{{ domain }}
+        mode: "0644"
+      notify: Reiniciar BIND9
+
+    - name: Verificar la configuración
+      ansible.builtin.command: named-checkzone {{ domain }} /etc/bind/db.{{ domain }}
+      changed_when: false
+
+    - name: BIND9 encendido y habilitado al arrancar
+      ansible.builtin.service:
+        name: named
+        state: started
+        enabled: true
+
+  handlers:
+    - name: Reiniciar BIND9
+      ansible.builtin.service:
+        name: named
+        state: restarted
