@@ -227,6 +227,48 @@ services:
       resources:
         limits: { memory: 256M }
 
+  # ---------- Procesamiento paralelo + CQRS (lado de lectura) ----------
+
+  # Lado de LECTURA de CQRS: solo consulta los reportes que calculó Spark (reports_db).
+  reporting-service:
+    <<: *servicio-api
+    image: panaderia/reporting-service:latest
+    build:
+      context: ./backend
+      dockerfile: reporting-service/Dockerfile
+    environment:
+      <<: *entorno-api
+      DB_NAME: reports_db
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 160M }
+
+  # Job de Spark (PySpark, master local[*]). Queda con 0 réplicas para no gastar RAM;
+  # se ejecuta con ./deploy/correr_spark.sh (docker service scale panaderia_spark-job=1),
+  # lee las ventas de HDFS, calcula los reportes en paralelo y termina.
+  spark-job:
+    image: panaderia/spark-job:latest
+    build:
+      context: ./backend
+      dockerfile: spark-job/Dockerfile
+    environment:
+      HDFS_URL: hdfs://namenode:9000
+      DB_HOST: postgres
+      DB_NAME: reports_db
+      DB_USER: panaderia
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    ports:
+      - "4040:4040"   # Interfaz de Spark (solo mientras el job corre)
+    networks: [pos_net]
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      resources:
+        limits: { memory: 1200M }
+
   # ---------- Persistencia ----------
 
   postgres:

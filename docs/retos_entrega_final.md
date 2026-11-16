@@ -124,3 +124,37 @@ Docker Swarm. Cada reto tiene: qué pasó, por qué pasó y cómo se resolvió.
 - **Carga del histórico a HDFS:** el exportador copió 203.706 líneas en 23 carpetas de mes (27 archivos, 19,3 MB). `hdfs fsck /panaderia/ventas` → `Status: HEALTHY`.
 - **De la caja a HDFS:** la venta 94765 (Daviplata) apareció en `/panaderia/ventas/mes=2026-11/lineas_203707_203708.csv` **36 segundos** después de registrarse.
 - **Reinicio sin duplicados:** se borró a la fuerza el contenedor del exportador. Swarm lo recreó en 11 s, retomó desde el id 203708 guardado en HDFS y no volvió a copiar nada (28 archivos en total).
+
+---
+
+## Paso 4 · Spark, reporting-service (CQRS) y pantalla de Reportes
+
+### 19. Spark no podía leer los bloques de HDFS dentro de Swarm
+- **Qué pasó:** el job fallaba con `java.net.ConnectException: Connection refused` y `Failed to connect to /10.0.2.5:9866`.
+- **Por qué:** el NameNode registró al DataNode con la IP `10.0.2.5`, que es la del **balanceador interno de la red overlay** de Swarm (el tráfico pasa por un NAT), y no con su IP real (`10.0.2.33`). Spark pedía al NameNode dónde estaban los bloques, recibía esa IP equivocada y la conexión se rechazaba. El exportador no tenía el problema porque WebHDFS redirige por **nombre** (`datanode`).
+- **Solución:** que Spark se conecte al DataNode por su nombre: `spark.hadoop.dfs.client.use.datanode.hostname=true`. El DNS de Swarm resuelve `datanode` correctamente.
+
+### 20. El script para lanzar Spark terminaba antes de que el job empezara
+- **Qué pasó:** `correr_spark.sh` no mostraba nada y el job nunca corría.
+- **Por qué:** el script empezaba a leer los logs antes de que Swarm creara la tarea; `docker service logs` terminaba enseguida y el script volvía a poner 0 réplicas.
+- **Solución:** esperar el estado real de la tarea con `docker service ps` hasta `Complete` o `Failed`, y solo entonces mostrar los logs.
+
+### 21. Spark juntaba los archivos en pocas particiones
+- **Qué pasó:** el primer job usó solo 7 particiones y reportó "0 archivos".
+- **Por qué:** Spark junta archivos pequeños en una misma partición hasta 128 MB (`maxPartitionBytes`). El conteo de archivos se pedía después de transformar los datos.
+- **Solución:** `spark.sql.files.maxPartitionBytes = 4 MB` (igual al bloque de HDFS) y contar los archivos sobre la lectura original. Ahora: 28 archivos en 9 particiones procesadas en paralelo con 8 núcleos.
+
+### 22. Los mejores clientes no coincidían entre Spark y el dashboard
+- **Qué pasó:** al comparar los resultados de Spark con los de `sales-service`, todo coincidía excepto el ranking de clientes.
+- **Por qué:** no era un error de cálculo sino de criterio: el dashboard ordena por **número de compras** y Spark ordenaba por **dinero gastado**.
+- **Solución:** usar el mismo criterio en los dos (compras y luego gasto). Ahora los 10 primeros son idénticos.
+
+### 23. El domingo salía con 0 ventas en el dashboard (bug que venía del Proyecto 1)
+- **Qué pasó:** al hacer la pantalla de Reportes se notó que la gráfica "Ventas por día" del dashboard nunca mostraba ventas el domingo.
+- **Por qué:** la API numera los días 1 = lunes … **7 = domingo**, pero la gráfica buscaba el domingo como día **0**.
+- **Solución:** buscar los días 1 a 7 y usar `numero_dia % 7` para la etiqueta. Ahora el domingo aparece (es el día con más ventas).
+
+### Evidencias del paso 4 (2026-11-16)
+- **Spark:** leyó 203.708 líneas (94.765 ventas) de 28 archivos en HDFS, 9 particiones con 8 núcleos, en ~26-30 s (con el arranque del contenedor, ~40 s).
+- **Exactitud:** los reportes de Spark (sobre HDFS) y los del dashboard (sobre PostgreSQL) dan **exactamente los mismos números**: top 10 de productos, ventas por hora, por día, por mes, por categoría y top 10 de clientes.
+- **CQRS:** la pantalla Reportes solo llama a `reporting-service` (`/api/v1/reports/resumen`), que lee `reports_db`; la caja sigue escribiendo en `sales_db`.
