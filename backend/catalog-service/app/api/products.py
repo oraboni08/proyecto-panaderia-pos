@@ -19,8 +19,8 @@ def to_response(product: Product) -> ProductResponseDTO:
     return ProductResponseDTO(
         id_producto=product.id,
         nombre=product.nombre,
+        categoria=product.categoria,
         precio=product.precio,
-        tipo_venta=product.tipo_venta,
         activo=product.activo,
     )
 
@@ -31,6 +31,7 @@ def to_response(product: Product) -> ProductResponseDTO:
 )
 def list_products(
     activo: bool | None = None,
+    categoria: str | None = None,
     user: TokenUser = Depends(get_current_user),
     service: ProductService = Depends(get_product_service),
 ):
@@ -39,7 +40,19 @@ def list_products(
     if user.rol != "admin":
         activo = True
 
-    return [to_response(p) for p in service.list_products(activo)]
+    return [to_response(p) for p in service.list_products(activo, categoria)]
+
+
+@router.get(
+    "/categories",
+    response_model=list[str],
+)
+def list_categories(
+    user: TokenUser = Depends(get_current_user),
+    service: ProductService = Depends(get_product_service),
+):
+
+    return service.list_categories()
 
 
 @router.get(
@@ -68,8 +81,8 @@ def create_product(
 
     product = service.create_product(
         nombre=data.nombre,
+        categoria=data.categoria,
         precio=data.precio,
-        tipo_venta=data.tipo_venta,
         usuario=user.usuario,
     )
 
@@ -90,8 +103,8 @@ def replace_product(
     product = service.replace_product(
         product_id=product_id,
         nombre=data.nombre,
+        categoria=data.categoria,
         precio=data.precio,
-        tipo_venta=data.tipo_venta,
         usuario=user.usuario,
     )
 

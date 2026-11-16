@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -24,13 +24,15 @@ class ProductORM(Base):
         unique=True,
     )
 
-    precio: Mapped[float] = mapped_column(
-        Float,
+    categoria: Mapped[str] = mapped_column(
+        String,
         nullable=False,
+        index=True,
     )
 
-    tipo_venta: Mapped[str] = mapped_column(
-        String,
+    # Pesos colombianos, sin decimales.
+    precio: Mapped[int] = mapped_column(
+        Integer,
         nullable=False,
     )
 

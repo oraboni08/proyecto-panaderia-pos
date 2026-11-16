@@ -1,52 +1,70 @@
+"""Carga inicial del catálogo a partir del dataset (backend/dataset).
+
+    productos.csv          id_producto;nombre;categoria;precio;activo
+    cambios_producto.csv   historial: creación, alza de precios 2026 y productos de temporada
+
+Solo se ejecuta si la tabla de productos está vacía. El dataset lo produce
+backend/dataset/generar_dataset.py.
+"""
+
 import csv
+from datetime import datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from app.domain.models import TIPO_PESO, TIPO_UNIDAD
-from app.infrastructure.orm_models import ProductORM
+from app.infrastructure.orm_models import ProductChangeORM, ProductORM
 
 
-# Productos que se venden por peso (precio por kg). Ver Fase 1, sección 2.4.
-PRODUCTOS_POR_PESO = {26, 27, 28, 29, 32, 35, 42}
-
-NOMBRES_AJUSTADOS = {
-    "Huevos": "Huevos (docena)",
-}
+def _read_csv(path: Path) -> list[dict]:
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f, delimiter=";"))
 
 
 def seed_products(session: Session, dataset_dir: Path) -> int:
-    """Carga producto.csv solo si la tabla está vacía. Devuelve cuántos cargó."""
+    """Carga productos.csv (y su historial) solo si la tabla está vacía. Devuelve cuántos cargó."""
 
     if session.query(ProductORM).first() is not None:
         return 0
 
-    path = dataset_dir / "producto.csv"
+    path = dataset_dir / "productos.csv"
 
     if not path.exists():
         print(f"[catalog] No se encontró {path}; el catálogo inicia vacío")
         return 0
 
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        rows = list(csv.DictReader(f, delimiter=";"))
+    rows = _read_csv(path)
 
-    for row in rows:
-
-        id_producto = int(row["id_producto"])
-        nombre = " ".join(row["nombre_producto"].split())
-
-        session.add(
-            ProductORM(
-                id_producto=id_producto,
-                nombre=NOMBRES_AJUSTADOS.get(nombre, nombre),
-                precio=float(row["precio_unidad"]),
-                tipo_venta=TIPO_PESO if id_producto in PRODUCTOS_POR_PESO else TIPO_UNIDAD,
-                activo=True,
-            )
+    session.add_all(
+        ProductORM(
+            id_producto=int(row["id_producto"]),
+            nombre=row["nombre"].strip(),
+            categoria=row["categoria"].strip(),
+            precio=int(row["precio"]),
+            activo=row.get("activo", "true").strip().lower() == "true",
         )
+        for row in rows
+    )
+    session.flush()
+
+    cambios_path = dataset_dir / "cambios_producto.csv"
+    cambios = _read_csv(cambios_path) if cambios_path.exists() else []
+
+    session.add_all(
+        ProductChangeORM(
+            id_producto=int(c["id_producto"]),
+            accion=c["accion"],
+            campo=c["campo"] or None,
+            valor_anterior=c["valor_anterior"] or None,
+            valor_nuevo=c["valor_nuevo"],
+            usuario=c["usuario"],
+            fecha=datetime.strptime(c["fecha"], "%Y-%m-%d %H:%M:%S"),
+        )
+        for c in cambios
+    )
 
     session.commit()
 
-    print(f"[catalog] {len(rows)} productos cargados desde {path.name}")
+    print(f"[catalog] {len(rows)} productos y {len(cambios)} cambios cargados desde el dataset")
 
     return len(rows)

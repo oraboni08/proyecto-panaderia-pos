@@ -1,83 +1,85 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-CO">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard · Panadería POS</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥐</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · Pan del Valle</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <div class="admin-layout">
-    <aside class="sidebar" id="sidebar"></aside>
-
+  <div class="shell">
+    <nav class="side" id="side" aria-label="Menú principal"></nav>
     <main class="main">
-      <div class="page-header">
+      <div class="page-head">
         <div>
-          <h1>Dashboard de ventas</h1>
-          <div class="subtitle" id="periodo">Todas las ventas</div>
+          <h1>Dashboard</h1>
+          <p id="rango-txt">Resumen de ventas</p>
         </div>
-        <form class="date-filter" id="filtro">
-          <span aria-hidden="true">📅</span>
-          <input type="date" id="desde" aria-label="Desde">
-          <span>–</span>
-          <input type="date" id="hasta" aria-label="Hasta">
-          <button class="btn btn-primary btn-sm" type="submit">Aplicar</button>
-          <button class="btn btn-ghost btn-sm" type="button" id="limpiar">Ver todo</button>
-        </form>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="seg" role="tablist" aria-label="Periodo" id="rangos"></div>
+          <button class="btn" type="button" id="exportar"></button>
+        </div>
       </div>
 
-      <div id="error" class="alert hidden" role="alert"></div>
+      <div class="card" id="personalizado" style="padding:14px 16px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap" hidden>
+        <div class="fld"><label for="desde">Desde</label><input type="date" id="desde" class="fi" style="height:44px"></div>
+        <div class="fld"><label for="hasta">Hasta</label><input type="date" id="hasta" class="fi" style="height:44px"></div>
+        <button class="btn p" type="button" id="aplicar">Aplicar</button>
+      </div>
 
-      <section class="kpis">
-        <div class="card kpi"><div class="kpi-icon">💶</div><div class="kpi-label">Ingresos totales</div><div class="kpi-value" id="kpi-ingresos">—</div></div>
-        <div class="card kpi"><div class="kpi-icon">🛒</div><div class="kpi-label">Número de ventas</div><div class="kpi-value" id="kpi-ventas">—</div></div>
-        <div class="card kpi"><div class="kpi-icon">🥖</div><div class="kpi-label">Unidades vendidas</div><div class="kpi-value" id="kpi-unidades">—</div><div class="kpi-extra" id="kpi-kg"></div></div>
-        <div class="card kpi"><div class="kpi-icon">🧾</div><div class="kpi-label">Ticket promedio</div><div class="kpi-value" id="kpi-ticket">—</div></div>
-        <div class="card kpi"><div class="kpi-icon">👥</div><div class="kpi-label">Clientes activos</div><div class="kpi-value" id="kpi-clientes">—</div></div>
-      </section>
+      <section class="kpis" id="kpis" aria-label="Indicadores"></section>
 
-      <section class="grid-2">
-        <div class="card">
-          <h2>Ventas por día de la semana</h2>
-          <div class="chart-box"><canvas id="chart-dias"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h2>Top productos</h2>
-            <select id="orden-productos" style="width:auto">
-              <option value="ingresos">Por ingresos</option>
-              <option value="cantidad">Por cantidad</option>
-            </select>
+      <section class="charts">
+        <div class="card chart-card wide">
+          <div class="ch">
+            <div><h2 class="ct">Ingresos por mes</h2><p class="cs" id="meses-sub"></p></div>
+            <div class="legend" id="meses-leyenda"></div>
           </div>
-          <div class="chart-box"><canvas id="chart-productos"></canvas></div>
+          <div class="chart" id="ch-meses"></div>
         </div>
-      </section>
 
-      <section class="grid-2">
-        <div class="card">
-          <h2>Top clientes</h2>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Cliente</th><th class="num">Compras</th><th class="num">Gasto</th></tr></thead>
-              <tbody id="tabla-clientes"></tbody>
-            </table>
-          </div>
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Métodos de pago</h2><p class="cs">Participación en los ingresos del periodo</p></div></div>
+          <div id="ch-pagos"></div>
         </div>
-        <div class="card">
-          <h2 id="titulo-sin-ventas">Productos sin ventas</h2>
-          <div class="table-wrap table-scroll">
-            <table>
-              <thead><tr><th>Producto</th><th class="num">Precio</th><th></th></tr></thead>
-              <tbody id="tabla-sin-ventas"></tbody>
-            </table>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ventas por hora</h2><p class="cs">Cuándo llega la gente a la panadería</p></div></div>
+          <div class="chart" id="ch-horas"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ventas por día de la semana</h2><p class="cs">Número de ventas</p></div></div>
+          <div class="chart" id="ch-dias"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ingresos por categoría</h2><p class="cs">Qué se vende más en la vitrina</p></div></div>
+          <div id="ch-categorias" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+
+        <div class="card chart-card tbl-card wide">
+          <div class="ch">
+            <div><h2 class="ct">Top 10 productos</h2><p class="cs">Los que más dejan en el periodo</p></div>
+            <div class="seg" id="orden-top"><button type="button" class="on" data-o="ingresos">Por ingresos</button><button type="button" data-o="cantidad">Por unidades</button></div>
           </div>
+          <div class="tbl-wrap" id="tb-top"></div>
+        </div>
+
+        <div class="card chart-card tbl-card">
+          <div class="ch"><div><h2 class="ct">Mejores clientes</h2><p class="cs">Sin contar Consumidor final</p></div></div>
+          <div class="tbl-wrap" id="tb-clientes"></div>
+        </div>
+
+        <div class="card chart-card tbl-card">
+          <div class="ch"><div><h2 class="ct">Productos sin ventas</h2><p class="cs">Activos que nadie compró en el periodo</p></div></div>
+          <div class="tbl-wrap" id="tb-sin" style="max-height:420px;overflow-y:auto"></div>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="/js/vendor/chart.umd.min.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/session.js"></script>
   <script src="/js/api.js"></script>

@@ -31,12 +31,14 @@ class FakeCatalog(ProductCatalog):
 
     def __init__(self):
         self.products = {
-            4: ProductInfo(4, "Pan", 1.80, "unidad", True),
-            16: ProductInfo(16, "Baguetina", 0.60, "unidad", True),
-            35: ProductInfo(35, "Magdalenas", 5.80, "peso", True),
-            38: ProductInfo(38, "Huevos (docena)", 2.10, "unidad", True),
-            26: ProductInfo(26, "Rulo", 16.00, "peso", True),
-            50: ProductInfo(50, "Pan Viejo", 1.00, "unidad", False),
+            1: ProductInfo(1, "Pandebono", "Panadería de queso", 3200, True),
+            9: ProductInfo(9, "Pan aliñado", "Panes", 1800, True),
+            25: ProductInfo(25, "Pastel de pollo", "Hojaldres", 6000, True),
+            68: ProductInfo(68, "Café con leche", "Bebidas calientes", 3000, True),
+            86: ProductInfo(86, "Huevo AA (unidad)", "Lácteos y despensa", 650, True),
+            57: ProductInfo(57, "Natilla (porción)", "Tortas y postres", 3500, False),
+            # Producto recién creado en el catálogo: todavía no tiene ventas.
+            91: ProductInfo(91, "Pan de bono con guayaba", "Panadería de queso", 3900, True),
         }
 
     def get_product(self, product_id):

@@ -2,9 +2,22 @@ from dataclasses import dataclass
 from datetime import datetime
 
 
-TIPO_UNIDAD = "unidad"
-TIPO_PESO = "peso"
-TIPOS_VENTA = (TIPO_UNIDAD, TIPO_PESO)
+# Todos los productos se venden por unidad (en Colombia no se vende pan por peso).
+# El precio es en pesos colombianos (COP), sin decimales.
+CATEGORIAS = (
+    "Panadería de queso",
+    "Panes",
+    "Hojaldres",
+    "Salados",
+    "Desayunos",
+    "Tortas y postres",
+    "Galletas y dulces",
+    "Bebidas calientes",
+    "Bebidas frías",
+    "Lácteos y despensa",
+)
+
+PRECIO_MAXIMO = 1_000_000
 
 ACCION_CREAR = "CREAR"
 ACCION_EDITAR = "EDITAR"
@@ -16,8 +29,8 @@ ACCION_REACTIVAR = "REACTIVAR"
 class Product:
     id: int | None
     nombre: str
-    precio: float
-    tipo_venta: str
+    categoria: str
+    precio: int
     activo: bool = True
 
 
