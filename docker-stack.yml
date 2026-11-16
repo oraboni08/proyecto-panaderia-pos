@@ -7,7 +7,8 @@
 # Swarm ignora la sección "build"; la usa "docker compose build" para crear las imágenes locales.
 
 x-servicio-api: &servicio-api
-  networks: [pos_net]
+  # pos_net: tráfico de la aplicación. monitoring_net: Prometheus lee /metrics.
+  networks: [pos_net, monitoring_net]
   secrets: [db_password, jwt_secret]
   deploy: &deploy-api
     replicas: 2
@@ -110,6 +111,61 @@ services:
         # La carga inicial lee ~95.000 ventas del dataset; después usa mucho menos.
         limits: { memory: 512M }
 
+  # ---------- Monitoreo ----------
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d
+    ports:
+      - "9090:9090"
+    configs:
+      - source: prometheus_conf
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - prom_data:/prometheus
+    networks: [monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits: { memory: 256M }
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      # Para la demo: se puede ver el dashboard sin iniciar sesión (solo lectura).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/panaderia-pos.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_USERS_DEFAULT_LANGUAGE: es-ES
+    secrets: [grafana_password]
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/datasource.yml
+      - source: grafana_dashboards
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+      - source: grafana_dashboard_pos
+        target: /etc/grafana/dashboards/panaderia-pos.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks: [monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits: { memory: 256M }
+
   # ---------- Persistencia ----------
 
   postgres:
@@ -144,15 +200,27 @@ networks:
   pos_net:
     driver: overlay
     attachable: true
+  monitoring_net:
+    driver: overlay
 
 volumes:
   pg_data:
+  prom_data:
+  grafana_data:
 
 configs:
   gateway_conf:
     file: ./deploy/gateway/nginx.conf
   postgres_init:
     file: ./deploy/postgres/init.sql
+  prometheus_conf:
+    file: ./deploy/prometheus/prometheus.yml
+  grafana_datasource:
+    file: ./deploy/grafana/datasource.yml
+  grafana_dashboards:
+    file: ./deploy/grafana/dashboards.yml
+  grafana_dashboard_pos:
+    file: ./deploy/grafana/panaderia-pos.json
 
 secrets:
   db_password:
@@ -163,3 +231,5 @@ secrets:
     file: ./deploy/secrets/admin_password.txt
   cajero_password:
     file: ./deploy/secrets/cajero_password.txt
+  grafana_password:
+    file: ./deploy/secrets/grafana_password.txt

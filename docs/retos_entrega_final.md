@@ -1,0 +1,93 @@
+# Retos de la entrega final y cómo se resolvieron
+
+Bitácora de lo que no salió bien a la primera mientras migrábamos la Panadería POS a
+Docker Swarm. Cada reto tiene: qué pasó, por qué pasó y cómo se resolvió.
+
+---
+
+## Paso 1 · Docker, Swarm y PostgreSQL
+
+### 1. Poca memoria RAM para todo el sistema
+- **Qué pasó:** el computador de la demo tiene 7,4 GB de RAM y, con las aplicaciones de uso diario abiertas, solo quedaban 1,6 GB libres. Windows ya estaba comprimiendo memoria.
+- **Por qué:** Swarm, PostgreSQL, HDFS, Spark, Prometheus y Grafana juntos piden mucha memoria, y Hadoop y Spark corren sobre Java.
+- **Solución:**
+  - cerrar las aplicaciones que no se usan;
+  - limitar la memoria de Docker/WSL con `.wslconfig` (5 GB + 6 GB de swap);
+  - poner un límite de memoria a cada servicio en `docker-stack.yml`;
+  - usar un Swarm de un solo nodo;
+  - encender Spark solo cuando corre el job.
+
+### 2. SQLite no sirve con varias réplicas
+- **Qué pasó:** en el Proyecto 1 cada servicio guardaba sus datos en un archivo SQLite.
+- **Por qué:** con 2 réplicas, cada contenedor tendría su propio archivo. Una venta registrada en la réplica 1 no aparecería en la réplica 2.
+- **Solución:** pasar a **PostgreSQL**, un servidor que comparten todas las réplicas, con una base separada por servicio (patrón *database per service*). En local y en las pruebas se sigue usando SQLite, porque el servicio elige el motor según la variable `DB_HOST`.
+
+### 3. Los servicios arrancaban antes que PostgreSQL
+- **Qué pasó:** al desplegar, los servicios fallaban con `OperationalError` porque PostgreSQL aún no aceptaba conexiones.
+- **Por qué:** Docker Swarm no respeta `depends_on`, así que arranca todos los servicios a la vez.
+- **Solución:** al iniciar, cada servicio **reintenta la conexión** hasta 30 veces, cada 2 segundos (`_esperar_base` en `database.py`). Además, Swarm reinicia el contenedor si de todas formas falla.
+
+### 4. Dos réplicas cargando el dataset al mismo tiempo
+- **Qué pasó:** las 2 réplicas de cada servicio arrancan juntas y las dos ven la base vacía.
+- **Por qué:** es una *condición de carrera*. Las dos intentarían crear las tablas y cargar las 94.758 ventas, lo que duplica datos o genera errores de llave repetida.
+- **Solución:** un **candado de PostgreSQL** (`pg_advisory_lock`). La primera réplica toma el candado y carga los datos; la segunda espera y, cuando entra, ve que ya están. En los logs se comprueba que cada dataset lo cargó una sola réplica.
+
+### 5. La primera venta nueva chocaba con el id de una venta del dataset
+- **Qué pasó:** el dataset se carga con sus ids originales (1 a 94.758).
+- **Por qué:** cuando se inserta un id a mano, PostgreSQL no avanza el contador automático (la *secuencia*). La siguiente venta habría intentado usar el id 1, que ya existe.
+- **Solución:** después de la carga, el servicio ajusta cada secuencia al id más alto + 1 (`setval`). La venta de prueba quedó con el id 94.759.
+
+### 6. Consultas que solo funcionaban en SQLite
+- **Qué pasó:** las métricas del dashboard (ventas por día, hora y mes) usaban `strftime`, que no existe en PostgreSQL. En las pruebas por el gateway, además, el reporte de **productos más vendidos respondía error 500**.
+- **Por qué:**
+  - Cada motor tiene sus propias funciones de fecha.
+  - Para el mes, la consulta enviaba el formato `'YYYY-MM'` como parámetro, una vez en el SELECT y otra en el GROUP BY. PostgreSQL los toma como expresiones distintas y rechaza la consulta.
+  - El top de productos usaba un truco de optimización de SQLite (`GROUP BY id_producto + 0`) que PostgreSQL no acepta.
+- **Solución:**
+  - una función `_parte_fecha` que usa `EXTRACT` / `to_char` en PostgreSQL y `strftime` en SQLite;
+  - el formato del mes pasa a texto literal;
+  - el truco del `+ 0` solo se aplica en SQLite.
+  - El arreglo se desplegó con un **rolling update** (`docker service update`): Swarm cambió una réplica a la vez y el servicio nunca dejó de responder.
+
+### 7. Falló la descarga de la imagen de PostgreSQL
+- **Qué pasó:** la primera vez Swarm marcó la tarea de PostgreSQL como `Rejected` con el error `failed to copy: httpReadSeeker`.
+- **Por qué:** un corte de red durante la descarga de la imagen desde Docker Hub.
+- **Solución:** Swarm reintentó solo la tarea, y se descargó la imagen a mano con `docker pull postgres:16-alpine`. Lección para la demo: **descargar todas las imágenes antes** de presentar.
+
+### 8. La hora de las ventas
+- **Qué pasó:** la imagen `python:3.12-slim` no trae zonas horarias, así que las ventas nuevas habrían quedado con la hora UTC (5 horas adelante).
+- **Solución:** instalar `tzdata` en la imagen y definir `TZ=America/Bogota` (también en PostgreSQL).
+
+### 9. Contraseñas escritas en el código
+- **Qué pasó:** las claves de la base de datos, del JWT y de los usuarios iniciales estaban como valores por defecto o variables de entorno visibles.
+- **Solución:** **Docker secrets**. Swarm entrega cada clave como un archivo en `/run/secrets/`, y el servicio la lee mediante la variable `NOMBRE_FILE`. Los archivos de `deploy/secrets/` no se suben a GitHub.
+
+### 10. El front-end apuntaba a una dirección fija
+- **Qué pasó:** `config.js` tenía escrita la dirección `api.panaderia-pos.test` del despliegue con Vagrant.
+- **Solución:** en Swarm, la interfaz y la API llegan por el mismo API Gateway, así que se usan rutas relativas (`/api/v1/...`).
+
+### 11. El gateway se caía si un servicio no había arrancado
+- **Qué pasó:** Nginx resuelve los nombres de los servicios al iniciar. Si `sales-service` aún no existe, Nginx no arranca.
+- **Solución:** usar el DNS interno de Docker (`resolver 127.0.0.11`) con variables en `proxy_pass`. Así Nginx resuelve el nombre en cada petición y responde 502 mientras el servicio arranca, en vez de caerse. Además, `proxy_next_upstream` reintenta la petición en otra réplica si una falla.
+
+---
+
+## Paso 2 · Monitoreo con Prometheus y Grafana
+
+### 12. La librería de métricas no era compatible con nuestra versión de FastAPI
+- **Qué pasó:** al agregar `prometheus-fastapi-instrumentator`, 65 de las 144 pruebas fallaron con `AttributeError: '_IncludedRouter' object has no attribute 'path'`.
+- **Por qué:** la librería no se ha actualizado para FastAPI 0.142, que cambió cómo guarda las rutas internamente.
+- **Solución:** en vez de bajar la versión de FastAPI, se escribió un **middleware propio** (`app/api/observabilidad.py`, unas 30 líneas) con la librería oficial `prometheus_client`. Mide cada petición (contador por ruta y código, e histograma de tiempos) y publica `/metrics`. Se etiqueta con la *plantilla* de la ruta (`/orders/{id_venta}`) y no con la URL real, para no crear una serie de datos por cada venta.
+
+### 13. Swarm avisa que las imágenes no están en un registro
+- **Qué pasó:** al desplegar, `docker stack deploy` muestra: *"image panaderia/sales-service:latest could not be accessed on a registry to record its digest"*.
+- **Por qué:** las imágenes se construyen en el mismo computador y no se suben a Docker Hub. Con un solo nodo funciona, pero en un clúster de varios nodos cada nodo tendría que tener la imagen o podría correr versiones distintas.
+- **Solución:** para la demo (un nodo) no hay problema. Si se agregan más nodos, hay que publicar las imágenes en un registro (Docker Hub o un `registry` propio dentro del Swarm). Además, al actualizar un servicio con la misma etiqueta `latest` hay que forzarlo: `docker service update --force --image panaderia/sales-service:latest panaderia_sales-service`.
+
+---
+
+## Pruebas que salieron bien (evidencia para la presentación)
+
+- **Alta disponibilidad (2026-11-16):** con peticiones continuas al API se borró a la fuerza una réplica de `sales-service` (`docker rm -f`). **60 de 60 peticiones respondieron 200** y Swarm volvió a tener 2/2 réplicas en **11 segundos** (en `docker service ps` se ve `Failed … exit (137)` y luego la réplica nueva en `Running`).
+- **Rolling update:** el arreglo del top de productos se desplegó con `docker service update` sin cortar el servicio.
+- **Carga inicial con candado:** en los logs cada dataset lo carga una sola réplica (6 usuarios, 90 productos, 3.201 clientes, 94.758 ventas, 203.696 líneas).

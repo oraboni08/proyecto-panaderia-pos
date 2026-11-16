@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import customers, metrics, orders
 from app.api.errors import register_error_handlers
+from app.api.observabilidad import instrumentar
 from app.config import CORS_ORIGINS, DATASET_DIR
 from app.infrastructure.database import init_database
 from app.infrastructure.orm_models import Base
@@ -28,6 +29,10 @@ app.add_middleware(
 )
 
 register_error_handlers(app)
+
+
+# Métricas para Prometheus (/metrics).
+instrumentar(app)
 
 
 api = APIRouter(prefix="/api/v1/sales")
