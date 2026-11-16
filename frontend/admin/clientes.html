@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clientes · Pan del Valle</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <nav class="side" id="side" aria-label="Menú principal"></nav>
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>Clientes</h1>
+          <p id="resumen">Clientes registrados en la caja</p>
+        </div>
+        <button class="btn p" type="button" id="nuevo"></button>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <label class="srch" style="max-width:460px"><span class="muted" id="ico-buscar"></span>
+            <input type="search" id="buscar" placeholder="Buscar por nombre, cédula o celular" aria-label="Buscar cliente"></label>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl head-bg hover">
+            <thead><tr><th>Nombre</th><th>Documento</th><th>Celular</th><th>Correo</th><th>Barrio y ciudad</th><th>Cliente desde</th></tr></thead>
+            <tbody id="filas"></tbody>
+          </table>
+        </div>
+        <div class="tbl-foot"><span id="conteo"></span><div class="pager" id="pager"></div></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/clientes-form.js"></script>
+  <script src="/js/clientes.js"></script>
+</body>
+</html>

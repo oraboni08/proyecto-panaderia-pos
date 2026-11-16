@@ -76,15 +76,21 @@ def list_orders(
     desde: date | None = None,
     hasta: date | None = None,
     id_cliente: int | None = None,
-    limit: int = Query(default=200, ge=1, le=1000),
+    cajero: str | None = Query(default=None, description="Solo para el administrador"),
+    metodo_pago: str | None = None,
+    limit: int = Query(default=200, ge=1, le=2000),
     user: TokenUser = Depends(get_current_user),
     service: OrderService = Depends(get_order_service),
 ):
 
-    # El cajero solo ve las ventas que él registró (RF14).
-    cajero = None if user.rol == "admin" else user.usuario
+    # El cajero solo ve las ventas que él registró (RF14); el administrador puede filtrar por cajero.
+    if user.rol != "admin":
+        cajero = user.usuario
 
-    return [to_response(o) for o in service.list_orders(desde, hasta, cajero, id_cliente, limit)]
+    return [
+        to_response(o)
+        for o in service.list_orders(desde, hasta, cajero or None, id_cliente, limit, metodo_pago or None)
+    ]
 
 
 @router.get(

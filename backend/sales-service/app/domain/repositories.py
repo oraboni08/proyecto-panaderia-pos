@@ -61,6 +61,7 @@ class OrderRepository(ABC):
         cajero: str | None = None,
         id_cliente: int | None = None,
         limit: int | None = None,
+        metodo_pago: str | None = None,
     ) -> list[Order]:
         pass
 
