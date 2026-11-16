@@ -12,3 +12,7 @@ class BusinessRuleError(DomainError):
 
 class ServiceUnavailableError(DomainError):
     """Un servicio del que se depende (catalog) no responde (503)."""
+
+
+class ConflictError(DomainError):
+    """El dato ya existe, por ejemplo un documento repetido (409)."""

@@ -5,12 +5,17 @@ from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import get_metrics_service, require_admin
 from app.application.dto import (
+    CategoryDTO,
+    HourDTO,
+    MonthDTO,
+    PaymentDTO,
     ProductWithoutSalesDTO,
     SummaryDTO,
     TopCustomerDTO,
     TopProductDTO,
     WeekdayDTO,
 )
+from app.domain.models import METODOS_PAGO
 from app.domain.services import MetricsService
 from app.infrastructure.security import TokenUser
 
@@ -18,6 +23,11 @@ from app.infrastructure.security import TokenUser
 router = APIRouter(prefix="/metrics", tags=["Métricas del dashboard"])
 
 DIAS = {1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves", 5: "Viernes", 6: "Sábado", 7: "Domingo"}
+
+
+def _etiqueta_hora(hora: int) -> str:
+    sufijo = "a. m." if hora < 12 else "p. m."
+    return f"{(hora % 12) or 12} {sufijo}"
 
 
 @router.get("/summary", response_model=SummaryDTO)
@@ -45,6 +55,59 @@ def sales_by_weekday(
     ]
 
 
+@router.get("/sales-by-hour", response_model=list[HourDTO])
+def sales_by_hour(
+    desde: date | None = None,
+    hasta: date | None = None,
+    user: TokenUser = Depends(require_admin),
+    service: MetricsService = Depends(get_metrics_service),
+):
+
+    return [
+        HourDTO(hora=h.hora, etiqueta=_etiqueta_hora(h.hora), ventas=h.ventas, ingresos=h.ingresos)
+        for h in service.sales_by_hour(desde, hasta)
+    ]
+
+
+@router.get("/sales-by-month", response_model=list[MonthDTO])
+def sales_by_month(
+    desde: date | None = None,
+    hasta: date | None = None,
+    user: TokenUser = Depends(require_admin),
+    service: MetricsService = Depends(get_metrics_service),
+):
+
+    return [MonthDTO(**vars(m)) for m in service.sales_by_month(desde, hasta)]
+
+
+@router.get("/sales-by-category", response_model=list[CategoryDTO])
+def sales_by_category(
+    desde: date | None = None,
+    hasta: date | None = None,
+    user: TokenUser = Depends(require_admin),
+    service: MetricsService = Depends(get_metrics_service),
+):
+
+    return [
+        CategoryDTO(categoria=g.clave, ventas=g.ventas, unidades=g.unidades, ingresos=g.ingresos)
+        for g in service.sales_by_category(desde, hasta)
+    ]
+
+
+@router.get("/sales-by-payment", response_model=list[PaymentDTO])
+def sales_by_payment(
+    desde: date | None = None,
+    hasta: date | None = None,
+    user: TokenUser = Depends(require_admin),
+    service: MetricsService = Depends(get_metrics_service),
+):
+
+    return [
+        PaymentDTO(metodo_pago=g.clave, nombre=METODOS_PAGO.get(g.clave, g.clave), ventas=g.ventas, ingresos=g.ingresos)
+        for g in service.sales_by_payment(desde, hasta)
+    ]
+
+
 @router.get("/top-products", response_model=list[TopProductDTO])
 def top_products(
     desde: date | None = None,
@@ -59,7 +122,7 @@ def top_products(
         TopProductDTO(
             id_producto=p.id_producto,
             producto=p.nombre,
-            tipo_venta=p.tipo_venta,
+            categoria=p.categoria,
             cantidad=p.cantidad,
             ingresos=p.ingresos,
         )
@@ -88,6 +151,6 @@ def products_without_sales(
 ):
 
     return [
-        ProductWithoutSalesDTO(id_producto=p.id, nombre=p.nombre, precio=p.precio, tipo_venta=p.tipo_venta)
+        ProductWithoutSalesDTO(id_producto=p.id, nombre=p.nombre, categoria=p.categoria, precio=p.precio)
         for p in service.products_without_sales(desde, hasta)
     ]

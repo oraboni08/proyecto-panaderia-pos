@@ -1,5 +1,4 @@
--- Esquema de la base de datos de catalog-service (catalog.db)
--- Lo crea SQLAlchemy automáticamente al iniciar el servicio (app/infrastructure/orm_models.py).
+-- Estructura de catalog.db (generada por SQLAlchemy)
 
 CREATE TABLE cambios_producto (
 	id_cambio INTEGER NOT NULL, 
@@ -17,10 +16,11 @@ CREATE TABLE cambios_producto (
 CREATE TABLE productos (
 	id_producto INTEGER NOT NULL, 
 	nombre VARCHAR NOT NULL, 
-	precio FLOAT NOT NULL, 
-	tipo_venta VARCHAR NOT NULL, 
+	categoria VARCHAR NOT NULL, 
+	precio INTEGER NOT NULL, 
 	activo BOOLEAN NOT NULL, 
 	PRIMARY KEY (id_producto), 
 	UNIQUE (nombre)
 );
 
+CREATE INDEX ix_productos_categoria ON productos (categoria);

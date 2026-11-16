@@ -23,7 +23,7 @@ class ProductRepository(ABC):
         pass
 
     @abstractmethod
-    def list_all(self, activo: bool | None = None) -> list[Product]:
+    def list_all(self, activo: bool | None = None, categoria: str | None = None) -> list[Product]:
         pass
 
     @abstractmethod

@@ -10,8 +10,8 @@ def _to_product(db_product: ProductORM) -> Product:
     return Product(
         id=db_product.id_producto,
         nombre=db_product.nombre,
+        categoria=db_product.categoria,
         precio=db_product.precio,
-        tipo_venta=db_product.tipo_venta,
         activo=db_product.activo,
     )
 
@@ -37,8 +37,8 @@ class SQLAlchemyProductRepository(ProductRepository):
 
         db_product = ProductORM(
             nombre=product.nombre,
+            categoria=product.categoria,
             precio=product.precio,
-            tipo_venta=product.tipo_venta,
             activo=product.activo,
         )
 
@@ -75,12 +75,15 @@ class SQLAlchemyProductRepository(ProductRepository):
 
         return _to_product(db_product)
 
-    def list_all(self, activo: bool | None = None) -> list[Product]:
+    def list_all(self, activo: bool | None = None, categoria: str | None = None) -> list[Product]:
 
         query = self.session.query(ProductORM)
 
         if activo is not None:
             query = query.filter(ProductORM.activo == activo)
+
+        if categoria is not None:
+            query = query.filter(func.lower(ProductORM.categoria) == categoria.lower())
 
         return [
             _to_product(db_product)
@@ -92,8 +95,8 @@ class SQLAlchemyProductRepository(ProductRepository):
         db_product = self.session.get(ProductORM, product.id)
 
         db_product.nombre = product.nombre
+        db_product.categoria = product.categoria
         db_product.precio = product.precio
-        db_product.tipo_venta = product.tipo_venta
         db_product.activo = product.activo
 
         for change in changes:

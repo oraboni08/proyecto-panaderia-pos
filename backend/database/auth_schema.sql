@@ -1,5 +1,4 @@
--- Esquema de la base de datos de auth-service (auth.db)
--- Lo crea SQLAlchemy automáticamente al iniciar el servicio (app/infrastructure/orm_models.py).
+-- Estructura de auth.db (generada por SQLAlchemy)
 
 CREATE TABLE usuarios (
 	id_usuario INTEGER NOT NULL, 
@@ -12,4 +11,3 @@ CREATE TABLE usuarios (
 	PRIMARY KEY (id_usuario), 
 	UNIQUE (usuario)
 );
-

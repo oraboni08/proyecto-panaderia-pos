@@ -10,8 +10,8 @@ def _to_product(data: dict) -> ProductInfo:
     return ProductInfo(
         id=data["id_producto"],
         nombre=data["nombre"],
-        precio=data["precio"],
-        tipo_venta=data["tipo_venta"],
+        categoria=data["categoria"],
+        precio=int(data["precio"]),
         activo=data["activo"],
     )
 

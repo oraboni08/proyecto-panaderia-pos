@@ -22,7 +22,7 @@ app = FastAPI(
     openapi_url="/api/v1/sales/openapi.json",
     redoc_url=None,
     title="Panadería POS - Sales Service",
-    description="Clientes, ventas con varios productos y métricas del dashboard.",
+    description="Clientes, ventas con varios productos y método de pago, y métricas del dashboard.",
 )
 
 app.add_middleware(

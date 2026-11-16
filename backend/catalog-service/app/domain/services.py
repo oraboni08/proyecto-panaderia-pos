@@ -6,7 +6,8 @@ from app.domain.models import (
     ACCION_DESACTIVAR,
     ACCION_EDITAR,
     ACCION_REACTIVAR,
-    TIPOS_VENTA,
+    CATEGORIAS,
+    PRECIO_MAXIMO,
     Product,
     ProductChange,
 )
@@ -15,7 +16,7 @@ from app.domain.repositories import ChangeRepository, ProductRepository
 
 def _format(campo: str, valor) -> str:
     if campo == "precio":
-        return f"{valor:.2f}"
+        return str(int(valor))
     if campo == "activo":
         return "activo" if valor else "inactivo"
     return str(valor)
@@ -27,8 +28,11 @@ class ProductService:
         self.products = products
         self.changes = changes
 
-    def list_products(self, activo: bool | None = None) -> list[Product]:
-        return self.products.list_all(activo)
+    def list_products(self, activo: bool | None = None, categoria: str | None = None) -> list[Product]:
+        return self.products.list_all(activo, categoria)
+
+    def list_categories(self) -> list[str]:
+        return list(CATEGORIAS)
 
     def get_product(self, product_id: int) -> Product:
 
@@ -42,18 +46,18 @@ class ProductService:
     def create_product(
         self,
         nombre: str,
+        categoria: str,
         precio: float,
-        tipo_venta: str,
         usuario: str,
     ) -> Product:
 
-        nombre, precio, tipo_venta = self._validate(nombre, precio, tipo_venta)
+        nombre, categoria, precio = self._validate(nombre, categoria, precio)
 
         product = Product(
             id=None,
             nombre=nombre,
+            categoria=categoria,
             precio=precio,
-            tipo_venta=tipo_venta,
             activo=True,
         )
 
@@ -63,7 +67,7 @@ class ProductService:
             accion=ACCION_CREAR,
             campo=None,
             valor_anterior=None,
-            valor_nuevo=f"{nombre} | {precio:.2f} | {tipo_venta}",
+            valor_nuevo=f"{nombre} | {categoria} | {precio}",
             usuario=usuario,
             fecha=datetime.now(),
         )
@@ -74,8 +78,8 @@ class ProductService:
         self,
         product_id: int,
         nombre: str,
+        categoria: str,
         precio: float,
-        tipo_venta: str,
         usuario: str,
     ) -> Product:
 
@@ -83,8 +87,8 @@ class ProductService:
             product_id,
             usuario,
             nombre=nombre,
+            categoria=categoria,
             precio=precio,
-            tipo_venta=tipo_venta,
         )
 
     def update_product(
@@ -92,24 +96,24 @@ class ProductService:
         product_id: int,
         usuario: str,
         nombre: str | None = None,
+        categoria: str | None = None,
         precio: float | None = None,
-        tipo_venta: str | None = None,
         activo: bool | None = None,
     ) -> Product:
 
         product = self.get_product(product_id)
 
-        nombre, precio, tipo_venta = self._validate(
+        nombre, categoria, precio = self._validate(
             nombre if nombre is not None else product.nombre,
+            categoria if categoria is not None else product.categoria,
             precio if precio is not None else product.precio,
-            tipo_venta if tipo_venta is not None else product.tipo_venta,
             exclude_id=product.id,
         )
 
         nuevos = {
             "nombre": nombre,
+            "categoria": categoria,
             "precio": precio,
-            "tipo_venta": tipo_venta,
             "activo": activo if activo is not None else product.activo,
         }
 
@@ -157,27 +161,38 @@ class ProductService:
     def _validate(
         self,
         nombre: str,
+        categoria: str,
         precio: float,
-        tipo_venta: str,
         exclude_id: int | None = None,
-    ) -> tuple[str, float, str]:
+    ) -> tuple[str, str, int]:
 
         nombre = " ".join(nombre.split())
 
         if not nombre:
             raise BusinessRuleError("El nombre del producto no puede estar vacío")
 
+        # La categoría se compara sin importar mayúsculas y se guarda con el nombre oficial.
+        por_clave = {c.lower(): c for c in CATEGORIAS}
+        categoria = por_clave.get(" ".join(categoria.split()).lower())
+
+        if categoria is None:
+            raise BusinessRuleError(f"La categoría debe ser una de: {', '.join(CATEGORIAS)}")
+
         if precio <= 0:
             raise BusinessRuleError("El precio debe ser mayor que 0")
 
-        tipo_venta = tipo_venta.strip().lower()
+        # Pesos colombianos: sin centavos.
+        if precio != int(precio):
+            raise BusinessRuleError("El precio debe ser un valor entero en pesos, sin centavos")
 
-        if tipo_venta not in TIPOS_VENTA:
-            raise BusinessRuleError("El tipo de venta debe ser 'unidad' o 'peso'")
+        precio = int(precio)
+
+        if precio > PRECIO_MAXIMO:
+            raise BusinessRuleError(f"El precio no puede superar ${PRECIO_MAXIMO:,}".replace(",", "."))
 
         existente = self.products.get_by_name(nombre)
 
         if existente is not None and existente.id != exclude_id:
             raise ConflictError(f"Ya existe un producto llamado '{nombre}'")
 
-        return nombre, round(precio, 2), tipo_venta
+        return nombre, categoria, precio

@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.domain.exceptions import BusinessRuleError, NotFoundError, ServiceUnavailableError
+from app.domain.exceptions import BusinessRuleError, ConflictError, NotFoundError, ServiceUnavailableError
 
 
 STATUS_BY_ERROR = {
     NotFoundError: 404,
     BusinessRuleError: 400,
+    ConflictError: 409,
     ServiceUnavailableError: 503,
 }
 

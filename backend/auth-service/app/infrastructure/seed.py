@@ -8,6 +8,16 @@ from app.infrastructure.repositories import SQLAlchemyUserRepository
 from app.infrastructure.security import BcryptPasswordHasher
 
 
+# Cajeros que aparecen en el dataset de ventas (backend/dataset/ventas.csv):
+# turno de la mañana (6:00-14:00) y de la tarde (14:00-21:00).
+CAJEROS_DATASET = [
+    ("Marcela Castillo", "mcastillo"),
+    ("Jhonatan Rengifo", "jrengifo"),
+    ("Luisa Valencia", "lvalencia"),
+    ("Daniela Mosquera", "dmosquera"),
+]
+
+
 def seed_users(session: Session) -> int:
     """Crea los usuarios iniciales (RN21) solo si la tabla está vacía."""
 
@@ -17,8 +27,12 @@ def seed_users(session: Session) -> int:
     service = UserService(SQLAlchemyUserRepository(session), BcryptPasswordHasher())
 
     service.create_user("Administrador", "admin", ADMIN_PASSWORD, ROL_ADMIN)
-    service.create_user("Cajero", "cajero", CAJERO_PASSWORD, ROL_CAJERO)
+    service.create_user("Cajero de pruebas", "cajero", CAJERO_PASSWORD, ROL_CAJERO)
 
-    print("[auth] Usuarios iniciales creados: admin, cajero")
+    for nombre, usuario in CAJEROS_DATASET:
+        service.create_user(nombre, usuario, CAJERO_PASSWORD, ROL_CAJERO)
 
-    return 2
+    usuarios = ["admin", "cajero"] + [u for _, u in CAJEROS_DATASET]
+    print(f"[auth] Usuarios iniciales creados: {', '.join(usuarios)}")
+
+    return len(usuarios)

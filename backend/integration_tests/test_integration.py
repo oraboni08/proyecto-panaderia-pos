@@ -46,7 +46,7 @@ def producto(admin):
     nombre = f"Pan Prueba {uuid.uuid4().hex[:6]}"
     r = httpx.post(
         f"{CATALOG}/products",
-        json={"nombre": nombre, "precio": 2.00, "tipo_venta": "unidad"},
+        json={"nombre": nombre, "categoria": "Panes", "precio": 2000},
         headers=admin,
     )
     assert r.status_code == 201, r.text
@@ -73,7 +73,12 @@ def test_roles_se_respetan_en_todos_los_servicios(cajero):
 def test_flujo_completo_de_venta(admin, cajero, producto):
     """Admin crea producto → cajero registra cliente → venta con carrito → aparece en el dashboard."""
 
-    r = httpx.post(f"{SALES}/customers", json={"nombre": "Cliente Integración"}, headers=cajero)
+    documento = str(uuid.uuid4().int)[:10]
+    r = httpx.post(
+        f"{SALES}/customers",
+        json={"nombre": "Cliente Integración", "documento": documento, "telefono": "3001234567", "ciudad": "Cali"},
+        headers=cajero,
+    )
     assert r.status_code == 201
     cliente = r.json()
 
@@ -81,9 +86,10 @@ def test_flujo_completo_de_venta(admin, cajero, producto):
         f"{SALES}/orders",
         json={
             "id_cliente": cliente["id_cliente"],
+            "metodo_pago": "nequi",
             "lineas": [
                 {"id_producto": producto["id_producto"], "cantidad": 3},
-                {"id_producto": 35, "cantidad": 500},  # Magdalenas, por peso: 500 g
+                {"id_producto": 1, "cantidad": 2},  # Pandebono, $3.200 c/u
             ],
         },
         headers=cajero,
@@ -93,11 +99,12 @@ def test_flujo_completo_de_venta(admin, cajero, producto):
 
     # sales consultó a catalog el nombre y el precio de cada producto.
     assert venta["lineas"][0]["producto"] == producto["nombre"]
-    assert venta["lineas"][0]["subtotal"] == 6.00
-    assert venta["lineas"][1]["producto"] == "Magdalenas"
-    assert venta["lineas"][1]["cantidad"] == 0.5
-    assert venta["lineas"][1]["subtotal"] == 2.90
-    assert venta["total"] == 8.90
+    assert venta["lineas"][0]["subtotal"] == 6000
+    assert venta["lineas"][1]["producto"] == "Pandebono"
+    assert venta["lineas"][1]["categoria"] == "Panadería de queso"
+    assert venta["lineas"][1]["subtotal"] == 6400
+    assert venta["total"] == 12400
+    assert venta["metodo_pago"] == "nequi"
 
     hoy = date.today().isoformat()
     ventas_hoy = httpx.get(f"{SALES}/orders", params={"desde": hoy, "hasta": hoy}, headers=cajero).json()
@@ -112,19 +119,19 @@ def test_cambio_de_precio_no_altera_ventas_anteriores_rn06(admin, cajero, produc
 
     venta1 = httpx.post(f"{SALES}/orders", json={"lineas": [{"id_producto": pid, "cantidad": 1}]}, headers=cajero).json()
 
-    r = httpx.patch(f"{CATALOG}/products/{pid}", json={"precio": 2.50}, headers=admin)
+    r = httpx.patch(f"{CATALOG}/products/{pid}", json={"precio": 2500}, headers=admin)
     assert r.status_code == 200
 
     venta2 = httpx.post(f"{SALES}/orders", json={"lineas": [{"id_producto": pid, "cantidad": 1}]}, headers=cajero).json()
 
-    assert venta2["total"] == 2.50
+    assert venta2["total"] == 2500
     venta1_ahora = httpx.get(f"{SALES}/orders/{venta1['id_venta']}", headers=cajero).json()
-    assert venta1_ahora["total"] == 2.00
+    assert venta1_ahora["total"] == 2000
 
     historial = httpx.get(f"{CATALOG}/changes", params={"product_id": pid}, headers=admin).json()
     assert historial[0]["campo"] == "precio"
-    assert historial[0]["valor_anterior"] == "2.00"
-    assert historial[0]["valor_nuevo"] == "2.50"
+    assert historial[0]["valor_anterior"] == "2000"
+    assert historial[0]["valor_nuevo"] == "2500"
 
 
 def test_producto_desactivado_no_se_puede_vender_rn01_rn11(admin, cajero, producto):
@@ -144,6 +151,13 @@ def test_producto_nuevo_aparece_sin_ventas_rf05(admin, producto):
     assert producto["id_producto"] in [p["id_producto"] for p in sin_ventas]
 
 
+def test_cajero_del_dataset_entra_y_ve_su_historial():
+    headers = login("mcastillo", CAJERO_PASSWORD)
+    ventas = httpx.get(f"{SALES}/orders", params={"limit": 5}, headers=headers).json()
+    assert len(ventas) == 5
+    assert all(v["cajero"] == "mcastillo" for v in ventas)
+
+
 def test_usuario_creado_por_admin_puede_vender(admin):
     usuario = f"cajero{uuid.uuid4().hex[:6]}"
 
@@ -155,6 +169,6 @@ def test_usuario_creado_por_admin_puede_vender(admin):
     assert r.status_code == 201
 
     headers = login(usuario, "nuevo-12345")
-    r = httpx.post(f"{SALES}/orders", json={"lineas": [{"id_producto": 4, "cantidad": 1}]}, headers=headers)
+    r = httpx.post(f"{SALES}/orders", json={"lineas": [{"id_producto": 9, "cantidad": 1}]}, headers=headers)
     assert r.status_code == 201
     assert r.json()["cajero"] == usuario
