@@ -1,38 +1,34 @@
 from datetime import datetime
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
-
-
-TipoVenta = Literal["unidad", "peso"]
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateProductDTO(BaseModel):
     nombre: str
-    precio: float
-    tipo_venta: TipoVenta
+    categoria: str
+    precio: float = Field(description="Precio por unidad en pesos colombianos (entero)")
 
 
 class ReplaceProductDTO(BaseModel):
     nombre: str
-    precio: float
-    tipo_venta: TipoVenta
+    categoria: str
+    precio: float = Field(description="Precio por unidad en pesos colombianos (entero)")
 
 
 class PatchProductDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     nombre: str | None = None
+    categoria: str | None = None
     precio: float | None = None
-    tipo_venta: TipoVenta | None = None
     activo: bool | None = None
 
 
 class ProductResponseDTO(BaseModel):
     id_producto: int
     nombre: str
-    precio: float
-    tipo_venta: str
+    categoria: str
+    precio: int
     activo: bool
 
 

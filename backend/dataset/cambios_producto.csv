@@ -1,0 +1,186 @@
+id_producto;accion;campo;valor_anterior;valor_nuevo;usuario;fecha
+1;CREAR;;;Pandebono | Panadería de queso | 3000;admin;2025-01-02 07:15:00
+2;CREAR;;;Pandebono relleno de bocadillo | Panadería de queso | 3600;admin;2025-01-02 07:15:00
+3;CREAR;;;Almojábana | Panadería de queso | 3100;admin;2025-01-02 07:15:00
+4;CREAR;;;Pan de yuca | Panadería de queso | 2800;admin;2025-01-02 07:15:00
+5;CREAR;;;Buñuelo | Panadería de queso | 1700;admin;2025-01-02 07:15:00
+6;CREAR;;;Pandequeso | Panadería de queso | 2800;admin;2025-01-02 07:15:00
+7;CREAR;;;Palito de queso | Panadería de queso | 2800;admin;2025-01-02 07:15:00
+8;CREAR;;;Rosquitas de queso (paquete) | Panadería de queso | 4200;admin;2025-01-02 07:15:00
+9;CREAR;;;Pan aliñado | Panes | 1700;admin;2025-01-02 07:15:00
+10;CREAR;;;Pan aliñado grande | Panes | 7000;admin;2025-01-02 07:15:00
+11;CREAR;;;Pan francés | Panes | 4200;admin;2025-01-02 07:15:00
+12;CREAR;;;Pan tajado blanco | Panes | 8000;admin;2025-01-02 07:15:00
+13;CREAR;;;Pan tajado integral | Panes | 8900;admin;2025-01-02 07:15:00
+14;CREAR;;;Mogolla integral | Panes | 1100;admin;2025-01-02 07:15:00
+15;CREAR;;;Mogolla chicharrona | Panes | 1400;admin;2025-01-02 07:15:00
+16;CREAR;;;Pan coco | Panes | 1900;admin;2025-01-02 07:15:00
+17;CREAR;;;Pan de leche | Panes | 2100;admin;2025-01-02 07:15:00
+18;CREAR;;;Pan campesino | Panes | 2300;admin;2025-01-02 07:15:00
+19;CREAR;;;Pan bolita | Panes | 800;admin;2025-01-02 07:15:00
+20;CREAR;;;Pan de maíz | Panes | 2300;admin;2025-01-02 07:15:00
+21;CREAR;;;Pan hawaiano | Panes | 14100;admin;2025-01-02 07:15:00
+22;CREAR;;;Pan de queso grande | Panes | 7000;admin;2025-01-02 07:15:00
+23;CREAR;;;Roscón de bocadillo | Panes | 3300;admin;2025-01-02 07:15:00
+24;CREAR;;;Roscón de arequipe | Panes | 3300;admin;2025-01-02 07:15:00
+25;CREAR;;;Pastel de pollo | Hojaldres | 5600;admin;2025-01-02 07:15:00
+26;CREAR;;;Pastel de carne | Hojaldres | 5600;admin;2025-01-02 07:15:00
+27;CREAR;;;Pastel de jamón y queso | Hojaldres | 3800;admin;2025-01-02 07:15:00
+28;CREAR;;;Pastel de queso | Hojaldres | 3600;admin;2025-01-02 07:15:00
+29;CREAR;;;Pastel gloria | Hojaldres | 3300;admin;2025-01-02 07:15:00
+30;CREAR;;;Pastel de guayaba | Hojaldres | 3000;admin;2025-01-02 07:15:00
+31;CREAR;;;Pastel de arequipe | Hojaldres | 3000;admin;2025-01-02 07:15:00
+32;CREAR;;;Croissant | Hojaldres | 3800;admin;2025-01-02 07:15:00
+33;CREAR;;;Croissant de jamón y queso | Hojaldres | 6100;admin;2025-01-02 07:15:00
+34;CREAR;;;Croissant de chocolate | Hojaldres | 3300;admin;2025-01-02 07:15:00
+35;CREAR;;;Palito de salchicha | Hojaldres | 3800;admin;2025-01-02 07:15:00
+36;CREAR;;;Milhoja | Hojaldres | 4200;admin;2025-01-02 07:15:00
+37;CREAR;;;Empanada de carne | Salados | 2800;admin;2025-01-02 07:15:00
+38;CREAR;;;Empanada de pollo | Salados | 2800;admin;2025-01-02 07:15:00
+39;CREAR;;;Aborrajado | Salados | 4200;admin;2025-01-02 07:15:00
+40;CREAR;;;Papa rellena | Salados | 3800;admin;2025-01-02 07:15:00
+41;CREAR;;;Arepa de choclo con queso | Salados | 5600;admin;2025-01-02 07:15:00
+42;CREAR;;;Sándwich de jamón y queso | Salados | 8500;admin;2025-01-02 07:15:00
+43;CREAR;;;Tamal vallecaucano | Salados | 12200;admin;2025-01-02 07:15:00
+44;CREAR;;;Desayuno tradicional | Desayunos | 13100;admin;2025-01-02 07:15:00
+45;CREAR;;;Huevos pericos con arepa | Desayunos | 8900;admin;2025-01-02 07:15:00
+46;CREAR;;;Changua | Desayunos | 10300;admin;2025-01-02 07:15:00
+47;CREAR;;;Calentado con huevo | Desayunos | 14100;admin;2025-01-02 07:15:00
+48;CREAR;;;Porción torta de chocolate | Tortas y postres | 6100;admin;2025-01-02 07:15:00
+49;CREAR;;;Porción torta de zanahoria | Tortas y postres | 6100;admin;2025-01-02 07:15:00
+50;CREAR;;;Porción tres leches | Tortas y postres | 6600;admin;2025-01-02 07:15:00
+51;CREAR;;;Porción torta María Luisa | Tortas y postres | 5200;admin;2025-01-02 07:15:00
+52;CREAR;;;Porción torta negra | Tortas y postres | 6100;admin;2025-01-02 07:15:00
+53;CREAR;;;Chifón de naranja | Tortas y postres | 3000;admin;2025-01-02 07:15:00
+54;CREAR;;;Brownie | Tortas y postres | 3900;admin;2025-01-02 07:15:00
+55;CREAR;;;Pionono | Tortas y postres | 3900;admin;2025-01-02 07:15:00
+56;CREAR;;;Arroz con leche | Tortas y postres | 3800;admin;2025-01-02 07:15:00
+57;CREAR;;;Natilla (porción) | Tortas y postres | 3300;admin;2025-01-02 07:15:00
+58;CREAR;;;Torta de cumpleaños (libra) | Tortas y postres | 45100;admin;2025-01-02 07:15:00
+59;CREAR;;;Galleta de mantequilla | Galletas y dulces | 1000;admin;2025-01-02 07:15:00
+60;CREAR;;;Galleta de avena | Galletas y dulces | 1900;admin;2025-01-02 07:15:00
+61;CREAR;;;Alfajor | Galletas y dulces | 1400;admin;2025-01-02 07:15:00
+62;CREAR;;;Cocada | Galletas y dulces | 1400;admin;2025-01-02 07:15:00
+63;CREAR;;;Polvorosa | Galletas y dulces | 1100;admin;2025-01-02 07:15:00
+64;CREAR;;;Mantecada | Galletas y dulces | 2300;admin;2025-01-02 07:15:00
+65;CREAR;;;Cuca | Galletas y dulces | 900;admin;2025-01-02 07:15:00
+66;CREAR;;;Tinto | Bebidas calientes | 1400;admin;2025-01-02 07:15:00
+67;CREAR;;;Pintadito | Bebidas calientes | 1900;admin;2025-01-02 07:15:00
+68;CREAR;;;Café con leche | Bebidas calientes | 2800;admin;2025-01-02 07:15:00
+69;CREAR;;;Capuchino | Bebidas calientes | 4200;admin;2025-01-02 07:15:00
+70;CREAR;;;Chocolate en leche | Bebidas calientes | 3800;admin;2025-01-02 07:15:00
+71;CREAR;;;Agua de panela con queso | Bebidas calientes | 4200;admin;2025-01-02 07:15:00
+72;CREAR;;;Aromática | Bebidas calientes | 1400;admin;2025-01-02 07:15:00
+73;CREAR;;;Milo caliente | Bebidas calientes | 4200;admin;2025-01-02 07:15:00
+74;CREAR;;;Jugo natural en agua | Bebidas frías | 5600;admin;2025-01-02 07:15:00
+75;CREAR;;;Jugo natural en leche | Bebidas frías | 6600;admin;2025-01-02 07:15:00
+76;CREAR;;;Lulada | Bebidas frías | 7000;admin;2025-01-02 07:15:00
+77;CREAR;;;Champús | Bebidas frías | 4200;admin;2025-01-02 07:15:00
+78;CREAR;;;Limonada natural | Bebidas frías | 4700;admin;2025-01-02 07:15:00
+79;CREAR;;;Avena | Bebidas frías | 3800;admin;2025-01-02 07:15:00
+80;CREAR;;;Kumis | Bebidas frías | 3800;admin;2025-01-02 07:15:00
+81;CREAR;;;Gaseosa 400 ml | Bebidas frías | 3800;admin;2025-01-02 07:15:00
+82;CREAR;;;Gaseosa 1,5 L | Bebidas frías | 7000;admin;2025-01-02 07:15:00
+83;CREAR;;;Pony Malta | Bebidas frías | 3300;admin;2025-01-02 07:15:00
+84;CREAR;;;Agua en botella 600 ml | Bebidas frías | 2600;admin;2025-01-02 07:15:00
+85;CREAR;;;Leche entera 1 L | Lácteos y despensa | 4900;admin;2025-01-02 07:15:00
+86;CREAR;;;Huevo AA (unidad) | Lácteos y despensa | 600;admin;2025-01-02 07:15:00
+87;CREAR;;;Queso campesino 250 g | Lácteos y despensa | 7000;admin;2025-01-02 07:15:00
+88;CREAR;;;Mantequilla 125 g | Lácteos y despensa | 4700;admin;2025-01-02 07:15:00
+89;CREAR;;;Arequipe 250 g | Lácteos y despensa | 6100;admin;2025-01-02 07:15:00
+90;CREAR;;;Yogur con cereal | Lácteos y despensa | 4500;admin;2025-01-02 07:15:00
+52;DESACTIVAR;activo;activo;inactivo;admin;2025-01-08 06:30:00
+57;DESACTIVAR;activo;activo;inactivo;admin;2025-01-08 06:30:00
+52;REACTIVAR;activo;inactivo;activo;admin;2025-12-01 06:30:00
+57;REACTIVAR;activo;inactivo;activo;admin;2025-12-01 06:30:00
+52;DESACTIVAR;activo;activo;inactivo;admin;2026-01-08 06:30:00
+57;DESACTIVAR;activo;activo;inactivo;admin;2026-01-08 06:30:00
+1;EDITAR;precio;3000;3200;admin;2026-01-12 06:05:00
+2;EDITAR;precio;3600;3800;admin;2026-01-12 06:05:00
+3;EDITAR;precio;3100;3300;admin;2026-01-12 06:05:00
+4;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+5;EDITAR;precio;1700;1800;admin;2026-01-12 06:05:00
+6;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+7;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+8;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+9;EDITAR;precio;1700;1800;admin;2026-01-12 06:05:00
+10;EDITAR;precio;7000;7500;admin;2026-01-12 06:05:00
+11;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+12;EDITAR;precio;8000;8500;admin;2026-01-12 06:05:00
+13;EDITAR;precio;8900;9500;admin;2026-01-12 06:05:00
+14;EDITAR;precio;1100;1200;admin;2026-01-12 06:05:00
+15;EDITAR;precio;1400;1500;admin;2026-01-12 06:05:00
+16;EDITAR;precio;1900;2000;admin;2026-01-12 06:05:00
+17;EDITAR;precio;2100;2200;admin;2026-01-12 06:05:00
+18;EDITAR;precio;2300;2400;admin;2026-01-12 06:05:00
+20;EDITAR;precio;2300;2400;admin;2026-01-12 06:05:00
+21;EDITAR;precio;14100;15000;admin;2026-01-12 06:05:00
+22;EDITAR;precio;7000;7500;admin;2026-01-12 06:05:00
+23;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+24;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+25;EDITAR;precio;5600;6000;admin;2026-01-12 06:05:00
+26;EDITAR;precio;5600;6000;admin;2026-01-12 06:05:00
+27;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+28;EDITAR;precio;3600;3800;admin;2026-01-12 06:05:00
+29;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+30;EDITAR;precio;3000;3200;admin;2026-01-12 06:05:00
+31;EDITAR;precio;3000;3200;admin;2026-01-12 06:05:00
+32;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+33;EDITAR;precio;6100;6500;admin;2026-01-12 06:05:00
+34;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+35;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+36;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+37;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+38;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+39;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+40;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+41;EDITAR;precio;5600;6000;admin;2026-01-12 06:05:00
+42;EDITAR;precio;8500;9000;admin;2026-01-12 06:05:00
+43;EDITAR;precio;12200;13000;admin;2026-01-12 06:05:00
+44;EDITAR;precio;13100;14000;admin;2026-01-12 06:05:00
+45;EDITAR;precio;8900;9500;admin;2026-01-12 06:05:00
+46;EDITAR;precio;10300;11000;admin;2026-01-12 06:05:00
+47;EDITAR;precio;14100;15000;admin;2026-01-12 06:05:00
+48;EDITAR;precio;6100;6500;admin;2026-01-12 06:05:00
+49;EDITAR;precio;6100;6500;admin;2026-01-12 06:05:00
+50;EDITAR;precio;6600;7000;admin;2026-01-12 06:05:00
+51;EDITAR;precio;5200;5500;admin;2026-01-12 06:05:00
+52;EDITAR;precio;6100;6500;admin;2026-01-12 06:05:00
+53;EDITAR;precio;3000;3200;admin;2026-01-12 06:05:00
+54;EDITAR;precio;3900;4200;admin;2026-01-12 06:05:00
+55;EDITAR;precio;3900;4200;admin;2026-01-12 06:05:00
+56;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+57;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+58;EDITAR;precio;45100;48000;admin;2026-01-12 06:05:00
+59;EDITAR;precio;1000;1100;admin;2026-01-12 06:05:00
+60;EDITAR;precio;1900;2000;admin;2026-01-12 06:05:00
+61;EDITAR;precio;1400;1500;admin;2026-01-12 06:05:00
+62;EDITAR;precio;1400;1500;admin;2026-01-12 06:05:00
+63;EDITAR;precio;1100;1200;admin;2026-01-12 06:05:00
+64;EDITAR;precio;2300;2500;admin;2026-01-12 06:05:00
+65;EDITAR;precio;900;1000;admin;2026-01-12 06:05:00
+66;EDITAR;precio;1400;1500;admin;2026-01-12 06:05:00
+67;EDITAR;precio;1900;2000;admin;2026-01-12 06:05:00
+68;EDITAR;precio;2800;3000;admin;2026-01-12 06:05:00
+69;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+70;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+71;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+72;EDITAR;precio;1400;1500;admin;2026-01-12 06:05:00
+73;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+74;EDITAR;precio;5600;6000;admin;2026-01-12 06:05:00
+75;EDITAR;precio;6600;7000;admin;2026-01-12 06:05:00
+76;EDITAR;precio;7000;7500;admin;2026-01-12 06:05:00
+77;EDITAR;precio;4200;4500;admin;2026-01-12 06:05:00
+78;EDITAR;precio;4700;5000;admin;2026-01-12 06:05:00
+79;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+80;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+81;EDITAR;precio;3800;4000;admin;2026-01-12 06:05:00
+82;EDITAR;precio;7000;7500;admin;2026-01-12 06:05:00
+83;EDITAR;precio;3300;3500;admin;2026-01-12 06:05:00
+84;EDITAR;precio;2600;2800;admin;2026-01-12 06:05:00
+85;EDITAR;precio;4900;5200;admin;2026-01-12 06:05:00
+86;EDITAR;precio;600;650;admin;2026-01-12 06:05:00
+87;EDITAR;precio;7000;7500;admin;2026-01-12 06:05:00
+88;EDITAR;precio;4700;5000;admin;2026-01-12 06:05:00
+89;EDITAR;precio;6100;6500;admin;2026-01-12 06:05:00
+90;EDITAR;precio;4500;4800;admin;2026-01-12 06:05:00

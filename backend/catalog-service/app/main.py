@@ -22,7 +22,7 @@ app = FastAPI(
     openapi_url="/api/v1/catalog/openapi.json",
     redoc_url=None,
     title="Panadería POS - Catalog Service",
-    description="Productos, precios, tipo de venta e historial de cambios.",
+    description="Productos por categoría, precios en pesos colombianos e historial de cambios.",
 )
 
 app.add_middleware(

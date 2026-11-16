@@ -1,27 +1,38 @@
-"""Carga inicial de clientes y ventas a partir del dataset (Fase 2, sección 3.4).
+"""Carga inicial de clientes y ventas a partir del dataset (backend/dataset).
 
-Para copiar nombre, tipo y precio de cada producto en las ventas históricas se lee
-producto.csv del dataset (no la base de datos de catalog-service, que no le pertenece).
+    clientes.csv       clientes registrados con cédula, teléfono, correo y dirección
+    ventas.csv         encabezado de cada venta (fecha y hora, cliente, cajero, método de pago)
+    lineas_venta.csv   productos de cada venta con el precio que tenían ese día
+    productos.csv      solo para copiar el nombre y la categoría en cada línea
+
+Para copiar nombre y categoría se lee productos.csv del dataset, no la base de datos de
+catalog-service, que no le pertenece a este servicio. Se usan inserciones en bloque:
+son ~95.000 ventas y ~200.000 líneas y así cargan en pocos segundos.
 """
 
 import csv
 from datetime import datetime
 from pathlib import Path
 
+from sqlalchemy import insert
 from sqlalchemy.orm import Session
 
-from app.domain.models import CONSUMIDOR_FINAL_ID, CONSUMIDOR_FINAL_NOMBRE, TIPO_PESO, TIPO_UNIDAD
+from app.domain.models import CONSUMIDOR_FINAL_ID, CONSUMIDOR_FINAL_NOMBRE
 from app.infrastructure.orm_models import CustomerORM, OrderLineORM, OrderORM
 
 
-# Deben coincidir con catalog-service (Fase 1, sección 2.4).
-PRODUCTOS_POR_PESO = {26, 27, 28, 29, 32, 35, 42}
-NOMBRES_AJUSTADOS = {"Huevos": "Huevos (docena)"}
+LOTE = 20_000
+FORMATO_FECHA = "%Y-%m-%d %H:%M:%S"
 
 
 def _read_csv(path: Path) -> list[dict]:
     with open(path, encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f, delimiter=";"))
+
+
+def _insert_en_lotes(session: Session, tabla, filas: list[dict]) -> None:
+    for i in range(0, len(filas), LOTE):
+        session.execute(insert(tabla), filas[i:i + LOTE])
 
 
 def seed_sales(session: Session, dataset_dir: Path) -> None:
@@ -36,13 +47,26 @@ def seed_sales(session: Session, dataset_dir: Path) -> None:
 def _seed_customers(session: Session, dataset_dir: Path) -> None:
 
     session.add(CustomerORM(id_cliente=CONSUMIDOR_FINAL_ID, nombre=CONSUMIDOR_FINAL_NOMBRE))
+    session.flush()
 
-    path = dataset_dir / "cliente.csv"
+    path = dataset_dir / "clientes.csv"
     rows = _read_csv(path) if path.exists() else []
 
-    for row in rows:
-        id_cliente = int(row["id_cliente"])
-        session.add(CustomerORM(id_cliente=id_cliente, nombre=f"Cliente {id_cliente}"))
+    _insert_en_lotes(session, CustomerORM, [
+        {
+            "id_cliente": int(r["id_cliente"]),
+            "nombre": r["nombre"],
+            "tipo_documento": r["tipo_documento"] or None,
+            "documento": r["documento"] or None,
+            "telefono": r["telefono"] or None,
+            "correo": r["correo"] or None,
+            "direccion": r["direccion"] or None,
+            "barrio": r["barrio"] or None,
+            "ciudad": r["ciudad"] or None,
+            "creado_en": datetime.strptime(r["fecha_registro"], FORMATO_FECHA) if r["fecha_registro"] else None,
+        }
+        for r in rows
+    ])
 
     session.commit()
 
@@ -51,53 +75,45 @@ def _seed_customers(session: Session, dataset_dir: Path) -> None:
 
 def _seed_orders(session: Session, dataset_dir: Path) -> None:
 
-    op_path = dataset_dir / "operacion.csv"
-    prod_path = dataset_dir / "producto.csv"
+    ventas_path = dataset_dir / "ventas.csv"
+    lineas_path = dataset_dir / "lineas_venta.csv"
+    prod_path = dataset_dir / "productos.csv"
 
-    if not (op_path.exists() and prod_path.exists()):
+    if not (ventas_path.exists() and lineas_path.exists() and prod_path.exists()):
         print("[sales] No se encontró el dataset; las ventas inician vacías")
         return
 
-    productos = {}
+    productos = {int(p["id_producto"]): (p["nombre"], p["categoria"]) for p in _read_csv(prod_path)}
 
-    for row in _read_csv(prod_path):
-        pid = int(row["id_producto"])
-        nombre = " ".join(row["nombre_producto"].split())
-        productos[pid] = (
-            NOMBRES_AJUSTADOS.get(nombre, nombre),
-            TIPO_PESO if pid in PRODUCTOS_POR_PESO else TIPO_UNIDAD,
-            float(row["precio_unidad"]),
-        )
+    ventas = _read_csv(ventas_path)
 
-    operaciones = _read_csv(op_path)
+    _insert_en_lotes(session, OrderORM, [
+        {
+            "id_venta": int(v["id_venta"]),
+            "id_cliente": int(v["id_cliente"]),
+            "cajero": v["cajero"] or None,
+            "fecha": datetime.strptime(v["fecha"], FORMATO_FECHA),
+            "metodo_pago": v["metodo_pago"],
+            "total": int(v["total"]),
+        }
+        for v in ventas
+    ])
 
-    for row in operaciones:
+    lineas = _read_csv(lineas_path)
 
-        pid = int(row["id_producto"])
-        nombre, tipo, precio = productos[pid]
-        cantidad = float(row["cantidad_producto"])
-        subtotal = round(precio * cantidad, 2)
-
-        session.add(
-            OrderORM(
-                id_venta=int(row["id_operacion"]),
-                id_cliente=int(row["id_cliente"]),
-                cajero=None,
-                fecha=datetime.strptime(row["fecha_operacion"], "%Y-%m-%d"),
-                total=subtotal,
-                lineas=[
-                    OrderLineORM(
-                        id_producto=pid,
-                        nombre_producto=nombre,
-                        tipo_venta=tipo,
-                        cantidad=cantidad,
-                        precio_unitario=precio,
-                        subtotal=subtotal,
-                    )
-                ],
-            )
-        )
+    _insert_en_lotes(session, OrderLineORM, [
+        {
+            "id_venta": int(l["id_venta"]),
+            "id_producto": int(l["id_producto"]),
+            "nombre_producto": productos[int(l["id_producto"])][0],
+            "categoria": productos[int(l["id_producto"])][1],
+            "cantidad": int(l["cantidad"]),
+            "precio_unitario": int(l["precio_unitario"]),
+            "subtotal": int(l["subtotal"]),
+        }
+        for l in lineas
+    ])
 
     session.commit()
 
-    print(f"[sales] {len(operaciones)} ventas históricas cargadas")
+    print(f"[sales] {len(ventas)} ventas históricas y {len(lineas)} líneas cargadas")

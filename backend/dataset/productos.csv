@@ -1,0 +1,91 @@
+id_producto;nombre;categoria;precio;activo
+1;Pandebono;Panadería de queso;3200;true
+2;Pandebono relleno de bocadillo;Panadería de queso;3800;true
+3;Almojábana;Panadería de queso;3300;true
+4;Pan de yuca;Panadería de queso;3000;true
+5;Buñuelo;Panadería de queso;1800;true
+6;Pandequeso;Panadería de queso;3000;true
+7;Palito de queso;Panadería de queso;3000;true
+8;Rosquitas de queso (paquete);Panadería de queso;4500;true
+9;Pan aliñado;Panes;1800;true
+10;Pan aliñado grande;Panes;7500;true
+11;Pan francés;Panes;4500;true
+12;Pan tajado blanco;Panes;8500;true
+13;Pan tajado integral;Panes;9500;true
+14;Mogolla integral;Panes;1200;true
+15;Mogolla chicharrona;Panes;1500;true
+16;Pan coco;Panes;2000;true
+17;Pan de leche;Panes;2200;true
+18;Pan campesino;Panes;2400;true
+19;Pan bolita;Panes;800;true
+20;Pan de maíz;Panes;2400;true
+21;Pan hawaiano;Panes;15000;true
+22;Pan de queso grande;Panes;7500;true
+23;Roscón de bocadillo;Panes;3500;true
+24;Roscón de arequipe;Panes;3500;true
+25;Pastel de pollo;Hojaldres;6000;true
+26;Pastel de carne;Hojaldres;6000;true
+27;Pastel de jamón y queso;Hojaldres;4000;true
+28;Pastel de queso;Hojaldres;3800;true
+29;Pastel gloria;Hojaldres;3500;true
+30;Pastel de guayaba;Hojaldres;3200;true
+31;Pastel de arequipe;Hojaldres;3200;true
+32;Croissant;Hojaldres;4000;true
+33;Croissant de jamón y queso;Hojaldres;6500;true
+34;Croissant de chocolate;Hojaldres;3500;true
+35;Palito de salchicha;Hojaldres;4000;true
+36;Milhoja;Hojaldres;4500;true
+37;Empanada de carne;Salados;3000;true
+38;Empanada de pollo;Salados;3000;true
+39;Aborrajado;Salados;4500;true
+40;Papa rellena;Salados;4000;true
+41;Arepa de choclo con queso;Salados;6000;true
+42;Sándwich de jamón y queso;Salados;9000;true
+43;Tamal vallecaucano;Salados;13000;true
+44;Desayuno tradicional;Desayunos;14000;true
+45;Huevos pericos con arepa;Desayunos;9500;true
+46;Changua;Desayunos;11000;true
+47;Calentado con huevo;Desayunos;15000;true
+48;Porción torta de chocolate;Tortas y postres;6500;true
+49;Porción torta de zanahoria;Tortas y postres;6500;true
+50;Porción tres leches;Tortas y postres;7000;true
+51;Porción torta María Luisa;Tortas y postres;5500;true
+52;Porción torta negra;Tortas y postres;6500;false
+53;Chifón de naranja;Tortas y postres;3200;true
+54;Brownie;Tortas y postres;4200;true
+55;Pionono;Tortas y postres;4200;true
+56;Arroz con leche;Tortas y postres;4000;true
+57;Natilla (porción);Tortas y postres;3500;false
+58;Torta de cumpleaños (libra);Tortas y postres;48000;true
+59;Galleta de mantequilla;Galletas y dulces;1100;true
+60;Galleta de avena;Galletas y dulces;2000;true
+61;Alfajor;Galletas y dulces;1500;true
+62;Cocada;Galletas y dulces;1500;true
+63;Polvorosa;Galletas y dulces;1200;true
+64;Mantecada;Galletas y dulces;2500;true
+65;Cuca;Galletas y dulces;1000;true
+66;Tinto;Bebidas calientes;1500;true
+67;Pintadito;Bebidas calientes;2000;true
+68;Café con leche;Bebidas calientes;3000;true
+69;Capuchino;Bebidas calientes;4500;true
+70;Chocolate en leche;Bebidas calientes;4000;true
+71;Agua de panela con queso;Bebidas calientes;4500;true
+72;Aromática;Bebidas calientes;1500;true
+73;Milo caliente;Bebidas calientes;4500;true
+74;Jugo natural en agua;Bebidas frías;6000;true
+75;Jugo natural en leche;Bebidas frías;7000;true
+76;Lulada;Bebidas frías;7500;true
+77;Champús;Bebidas frías;4500;true
+78;Limonada natural;Bebidas frías;5000;true
+79;Avena;Bebidas frías;4000;true
+80;Kumis;Bebidas frías;4000;true
+81;Gaseosa 400 ml;Bebidas frías;4000;true
+82;Gaseosa 1,5 L;Bebidas frías;7500;true
+83;Pony Malta;Bebidas frías;3500;true
+84;Agua en botella 600 ml;Bebidas frías;2800;true
+85;Leche entera 1 L;Lácteos y despensa;5200;true
+86;Huevo AA (unidad);Lácteos y despensa;650;true
+87;Queso campesino 250 g;Lácteos y despensa;7500;true
+88;Mantequilla 125 g;Lácteos y despensa;5000;true
+89;Arequipe 250 g;Lácteos y despensa;6500;true
+90;Yogur con cereal;Lácteos y despensa;4800;true

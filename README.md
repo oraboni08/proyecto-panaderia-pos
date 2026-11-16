@@ -4,8 +4,8 @@ Punto de venta y dashboard de ventas para una panadería de barrio.
 Proyecto de curso — **Redes e Infraestructura 2026** (1ª parte).
 
 - **Arquitectura:** tres microservicios (FastAPI) accedidos por API REST, front-end en HTML/CSS/JS.
-- **Dataset:** [Venta de productos de panadería (Kaggle)](https://www.kaggle.com/datasets/cuantico/venta-de-productos-de-panadera) — 42 productos, 210 clientes, 1.203 ventas.
-- **Usuarios:** administrador (dashboard, catálogo, historial, usuarios) y cajero (ventas con carrito).
+- **Dataset:** generado con `backend/dataset/generar_dataset.py` (semilla fija) para una panadería de barrio en Cali: 90 productos colombianos con precios en pesos, 3.200 clientes con datos completos y 94.758 ventas (2 ene 2025 – 15 nov 2026) con método de pago. Todo se vende por unidad.
+- **Usuarios:** administrador (dashboard, catálogo, clientes, historial, usuarios) y cajeros (ventas con carrito). Cajeros del dataset: `mcastillo`, `jrengifo`, `lvalencia`, `dmosquera` (misma contraseña que `cajero`).
 - **Despliegue:** dos servidores (back y front) + servidor DNS, con Vagrant y Ansible; acceso por el dominio `panaderia-pos.test`.
 - **Documento de las fases de definición y diseño:** [`entrega/Panaderia_POS_Proyecto1.pdf`](entrega/Panaderia_POS_Proyecto1.pdf) (también en `.pptx`).
 
@@ -21,7 +21,7 @@ proyecto-panaderia-pos/
 │   └── templates/            BIND9, Nginx y variables de entorno
 ├── systemd/                  un servicio por microservicio
 ├── backend/
-│   ├── dataset/              CSV originales de Kaggle
+│   ├── dataset/              CSV del dataset y el script que los genera
 │   ├── database/             bases SQLite iniciales y su esquema SQL
 │   ├── auth-service/         inicio de sesión (JWT) y usuarios         → puerto 8001
 │   ├── catalog-service/      productos e historial de cambios          → puerto 8002

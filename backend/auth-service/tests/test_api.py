@@ -17,6 +17,10 @@ def test_usuarios_iniciales_rn21(client, admin_headers):
     usuarios = {u["usuario"]: u for u in r.json()}
     assert usuarios["admin"]["rol"] == "admin"
     assert usuarios["cajero"]["rol"] == "cajero"
+    # Cajeros del dataset de ventas
+    for u in ("mcastillo", "jrengifo", "lvalencia", "dmosquera"):
+        assert usuarios[u]["rol"] == "cajero"
+    assert usuarios["mcastillo"]["nombre"] == "Marcela Castillo"
 
 
 def test_login_201_y_token_con_rol(client):
