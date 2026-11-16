@@ -14,6 +14,7 @@ Ctrl + C detiene todo.
 """
 
 import os
+import sqlite3
 import subprocess
 import sys
 import time
@@ -37,8 +38,36 @@ ENV = {
 }
 
 
+# Señal de que la base local ya tiene el modelo de datos actual (dataset colombiano, sin venta por peso).
+# Si una base creada con una versión anterior no la cumple, se aparta como respaldo y el servicio
+# crea una nueva desde backend/dataset al arrancar.
+VERIFICACION_ESQUEMA = {
+    "auth-service": ("auth.db", "SELECT 1 FROM usuarios WHERE usuario = 'mcastillo'"),
+    "catalog-service": ("catalog.db", "SELECT categoria FROM productos LIMIT 1"),
+    "sales-service": ("sales.db", "SELECT metodo_pago, (SELECT categoria FROM lineas_venta LIMIT 1) FROM ventas LIMIT 1"),
+}
+
+
+def apartar_bases_viejas() -> None:
+
+    for servicio, (archivo, consulta) in VERIFICACION_ESQUEMA.items():
+        db = BACKEND_DIR / servicio / archivo
+        if not db.exists():
+            continue
+        try:
+            with sqlite3.connect(db) as con:
+                vigente = con.execute(consulta).fetchone() is not None
+        except sqlite3.Error:
+            vigente = False
+        if not vigente:
+            respaldo = db.with_name(f"{db.stem}_version_anterior_{time.strftime('%Y%m%d_%H%M%S')}.db")
+            db.rename(respaldo)
+            print(f"  {servicio}: la base local era de una versión anterior; se guardó como {respaldo.name} y se crea una nueva.")
+
+
 def main() -> None:
 
+    apartar_bases_viejas()
     processes = []
 
     for name, port in SERVICES:
