@@ -4,17 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import customers, metrics, orders
 from app.api.errors import register_error_handlers
 from app.config import CORS_ORIGINS, DATASET_DIR
-from app.infrastructure.database import SessionLocal, engine
+from app.infrastructure.database import init_database
 from app.infrastructure.orm_models import Base
 from app.infrastructure.seed import seed_sales
 
 
-Base.metadata.create_all(
-    bind=engine
-)
-
-with SessionLocal() as session:
-    seed_sales(session, DATASET_DIR)
+init_database(Base.metadata, lambda session: seed_sales(session, DATASET_DIR))
 
 
 app = FastAPI(

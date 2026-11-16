@@ -1,20 +1,22 @@
 // Direcciones de los microservicios.
-// En el servidor todas las peticiones pasan por el API Gateway (api.panaderia-pos.test);
-// en el computador local (python run_dev.py) cada servicio tiene su propio puerto.
-// Al desplegar, Ansible reemplaza este archivo con la dirección del gateway.
+// - En Docker Swarm la página y la API llegan por el mismo API Gateway (Nginx),
+//   así que basta con rutas relativas: /api/v1/<servicio>.
+// - En el computador local (python run_dev.py, front-end en el puerto 8080)
+//   cada servicio tiene su propio puerto.
 
-const LOCAL = ["127.0.0.1", "localhost"].includes(window.location.hostname);
+const LOCAL_DEV =
+  ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "8080";
 
-const API_GATEWAY = "http://api.panaderia-pos.test";
-
-const API_URLS = LOCAL
+const API_URLS = LOCAL_DEV
   ? {
       auth: "http://127.0.0.1:8001/api/v1/auth",
       catalog: "http://127.0.0.1:8002/api/v1/catalog",
       sales: "http://127.0.0.1:8003/api/v1/sales",
+      reports: "http://127.0.0.1:8004/api/v1/reports",
     }
   : {
-      auth: `${API_GATEWAY}/api/v1/auth`,
-      catalog: `${API_GATEWAY}/api/v1/catalog`,
-      sales: `${API_GATEWAY}/api/v1/sales`,
+      auth: "/api/v1/auth",
+      catalog: "/api/v1/catalog",
+      sales: "/api/v1/sales",
+      reports: "/api/v1/reports",
     };

@@ -1,0 +1,9 @@
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.db
+**/tests
+**/.pytest_cache
+database/
+integration_tests/
+dataset/generar_dataset.py
