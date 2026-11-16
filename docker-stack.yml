@@ -215,7 +215,7 @@ services:
         target: /etc/grafana/provisioning/datasources/datasource.yml
       - source: grafana_dashboards
         target: /etc/grafana/provisioning/dashboards/dashboards.yml
-      - source: grafana_dashboard_pos
+      - source: grafana_dashboard_pos_v2
         target: /etc/grafana/dashboards/panaderia-pos.json
     volumes:
       - grafana_data:/var/lib/grafana
@@ -324,7 +324,7 @@ configs:
     file: ./deploy/grafana/datasource.yml
   grafana_dashboards:
     file: ./deploy/grafana/dashboards.yml
-  grafana_dashboard_pos:
+  grafana_dashboard_pos_v2:
     file: ./deploy/grafana/panaderia-pos.json
 
 secrets:

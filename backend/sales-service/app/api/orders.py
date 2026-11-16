@@ -23,6 +23,10 @@ VENTAS_REGISTRADAS = Counter(
 INGRESOS_PESOS = Counter(
     "panaderia_ingresos_pesos_total", "Pesos colombianos vendidos en la caja"
 )
+# Cada método de pago arranca en 0. Si la etiqueta naciera con la primera venta (ya en 1),
+# increase() de Prometheus no vería el salto 0 -> 1 y esa venta no aparecería en Grafana.
+for _metodo in METODOS_PAGO:
+    VENTAS_REGISTRADAS.labels(metodo_pago=_metodo)
 
 router = APIRouter(prefix="/orders", tags=["Ventas"])
 

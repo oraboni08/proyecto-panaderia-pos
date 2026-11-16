@@ -150,7 +150,7 @@
       "fieldConfig": {
         "defaults": {
           "decimals": 0,
-          "unit": "currencyCOP",
+          "unit": "prefix:$",
           "color": {
             "mode": "fixed",
             "fixedColor": "#c9853f"

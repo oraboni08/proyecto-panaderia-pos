@@ -158,3 +158,13 @@ Docker Swarm. Cada reto tiene: qué pasó, por qué pasó y cómo se resolvió.
 - **Spark:** leyó 203.708 líneas (94.765 ventas) de 28 archivos en HDFS, 9 particiones con 8 núcleos, en ~26-30 s (con el arranque del contenedor, ~40 s).
 - **Exactitud:** los reportes de Spark (sobre HDFS) y los del dashboard (sobre PostgreSQL) dan **exactamente los mismos números**: top 10 de productos, ventas por hora, por día, por mes, por categoría y top 10 de clientes.
 - **CQRS:** la pantalla Reportes solo llama a `reporting-service` (`/api/v1/reports/resumen`), que lee `reports_db`; la caja sigue escribiendo en `sales_db`.
+
+---
+
+## Video demo
+
+### 24. Grafana mostraba «0 ventas» aunque sí había ventas
+- **Qué pasó:** al grabar el video demo, el panel «Ventas registradas» de Grafana decía 0 después de hacer ventas en la caja.
+- **Por qué:** el contador `panaderia_ventas_total` tiene una etiqueta por método de pago, y cada etiqueta solo aparecía con la primera venta de ese método, cuando el contador **ya valía 1**. `increase()` de Prometheus necesita ver el salto 0 → 1; sin el 0, esa venta no se cuenta. Además, al matar una réplica su contador se pierde (los contadores viven en memoria de cada réplica).
+- **Solución:** crear las 6 etiquetas en 0 cuando arranca `sales-service` (práctica recomendada por Prometheus) y actualizar con rolling update, sin cortar el servicio. También se cambió la unidad del panel de ingresos para mostrar `$`. Como los configs de Swarm son inmutables, el dashboard pasó a `grafana_dashboard_pos_v2`.
+- **Evidencia:** una venta con Daviplata aparece en Grafana como «Ventas: 1» al siguiente scrape (capítulo 6 del video).
