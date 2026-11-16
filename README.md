@@ -1,7 +1,61 @@
-# 🥐 Panadería POS
+# Panadería POS · Pan del Valle
 
-Punto de venta y dashboard de ventas para una panadería de barrio.
-Proyecto de curso — **Redes e Infraestructura 2026** (1ª parte).
+Punto de venta y dashboard de ventas para una panadería de barrio en Cali.
+Proyecto de curso — **Redes e Infraestructura 2026**: Proyecto 1 (máquinas virtuales) y **entrega final de microservicios** (Docker Swarm).
+
+## Entrega final: microservicios en Docker Swarm
+
+| Entregable | Dónde |
+|---|---|
+| Presentación (15 min) | [`entrega/final/presentacion.html`](entrega/final/presentacion.html) — abrir en Chrome; `→` avanza, `F` pantalla completa, `D` abre el diagrama en draw.io |
+| Video demo (7:25) | [`entrega/final/video/Panaderia_POS_demo.mp4`](entrega/final/video/Panaderia_POS_demo.mp4) — grabado sobre el sistema desplegado |
+| Diagrama de arquitectura | [`entrega/final/Arquitectura_Panaderia_POS_v6.drawio`](entrega/final/Arquitectura_Panaderia_POS_v6.drawio) (draw.io) |
+| Retos y cómo se resolvieron | [`docs/retos_entrega_final.md`](docs/retos_entrega_final.md) (24 retos) |
+| Stack de Swarm | [`docker-stack.yml`](docker-stack.yml) + [`deploy/`](deploy/) |
+
+**Qué se implementó:**
+
+- **Docker:** 7 imágenes propias (auth, catalog, sales, reporting, frontend, hdfs-exporter, spark-job) y 6 oficiales con versión fija. Usuario sin privilegios, `HEALTHCHECK` y límite de memoria por servicio.
+- **Docker Swarm:** stack `panaderia` con 13 servicios (18 contenedores), redes overlay `pos_net` y `monitoring_net`, DNS interno y balanceo por IP virtual, Docker secrets, configs y rolling updates (`start-first` con rollback automático).
+- **Microservicios:** `auth-service` (JWT), `catalog-service`, `sales-service` (lado Command de CQRS) y `reporting-service` (lado Query), con 2 réplicas cada uno detrás de un API Gateway Nginx y una base por servicio en PostgreSQL.
+- **Monitoreo:** cada servicio publica `/metrics`; Prometheus descubre las réplicas por DNS (`tasks.<servicio>`) y Grafana trae el dashboard «Panadería POS» ya configurado.
+- **Alta disponibilidad:** al borrar a la fuerza una réplica de `sales-service`, 60 de 60 peticiones respondieron y Swarm volvió a 2/2 en 11 s.
+- **Procesamiento paralelo:** `hdfs-exporter` lleva las ventas a HDFS por mes; Apache Spark (PySpark) procesa el histórico en paralelo (203.711 líneas, 9 particiones, 8 núcleos) y guarda los reportes que sirve `reporting-service`.
+
+### Desplegar
+
+Requiere **Docker Desktop** (o Docker Engine) con unos 5 GB de RAM libres para Docker.
+
+```bash
+./deploy/desplegar.sh            # activa Swarm, crea los secretos que falten, construye y despliega
+docker service ls                # esperar a que todos estén en N/N (spark-job en 0/0 es lo normal)
+./deploy/correr_spark.sh         # ejecuta el job de Spark sobre HDFS y actualiza los reportes
+```
+
+| Qué | Dirección |
+|---|---|
+| Aplicación (caja y administración) | http://localhost — usuarios `admin` y `cajero` |
+| Grafana | http://localhost:3000 — usuario `admin` |
+| Prometheus | http://localhost:9090/targets |
+| HDFS (NameNode) | http://localhost:9870 |
+
+Las contraseñas están en `deploy/secrets/*.txt`; `desplegar.sh` las crea la primera vez (`admin12345`, `cajero12345` y claves aleatorias para la base de datos y el JWT) y nunca sobrescribe las existentes. Esos archivos no se suben al repositorio.
+
+Probar la recuperación ante fallos:
+
+```bash
+docker ps -q -f name=panaderia_sales-service | head -1 | xargs docker rm -f
+docker service ps panaderia_sales-service     # la tarea vieja queda "Failed" y aparece una nueva "Running"
+```
+
+Actualizar un servicio después de cambiar su código (rolling update, sin cortar el servicio):
+
+```bash
+docker compose -f docker-stack.yml build sales-service
+docker service update --force --image panaderia/sales-service:latest panaderia_sales-service
+```
+
+## Proyecto 1
 
 - **Arquitectura:** tres microservicios (FastAPI) accedidos por API REST, front-end en HTML/CSS/JS.
 - **Dataset:** generado con `backend/dataset/generar_dataset.py` (semilla fija) para una panadería de barrio en Cali: 90 productos colombianos con precios en pesos, 3.200 clientes con datos completos y 94.758 ventas (2 ene 2025 – 15 nov 2026) con método de pago. Todo se vende por unidad.
@@ -13,7 +67,10 @@ Proyecto de curso — **Redes e Infraestructura 2026** (1ª parte).
 
 ```
 proyecto-panaderia-pos/
-├── Vagrantfile               máquinas virtuales: dns-vm, back-vm, front-vm
+├── docker-stack.yml          stack de Docker Swarm (entrega final)
+├── deploy/                   gateway, PostgreSQL, Prometheus, Grafana, Hadoop y scripts de despliegue
+├── docs/                     retos de la entrega final
+├── Vagrantfile               máquinas virtuales: dns-vm, back-vm, front-vm (Proyecto 1)
 ├── ansible/
 │   ├── site.yml              punto de entrada del despliegue
 │   ├── dns.yml · back.yml · front.yml
@@ -26,10 +83,13 @@ proyecto-panaderia-pos/
 │   ├── auth-service/         inicio de sesión (JWT) y usuarios         → puerto 8001
 │   ├── catalog-service/      productos e historial de cambios          → puerto 8002
 │   ├── sales-service/        clientes, ventas y métricas del dashboard → puerto 8003
-│   ├── integration_tests/    pruebas con los tres servicios juntos
+│   ├── reporting-service/    reportes calculados por Spark (CQRS)      → puerto 8004
+│   ├── hdfs-exporter/        lleva las ventas nuevas a HDFS cada minuto
+│   ├── spark-job/            job de PySpark sobre el histórico en HDFS
+│   ├── integration_tests/    pruebas con los servicios juntos
 │   └── run_dev.py            levanta todo en el computador local
 ├── frontend/                 páginas del administrador y del cajero
-└── entrega/                  presentación de las fases (PDF y PowerPoint)
+└── entrega/                  Proyecto 1 (PDF y PowerPoint) y final/ (presentación, video y diagrama)
 ```
 
 Cada microservicio sigue la arquitectura en capas vista en clase:
@@ -132,9 +192,10 @@ cd backend
 cd catalog-service && python -m pytest && cd ..
 cd auth-service    && python -m pytest && cd ..
 cd sales-service   && python -m pytest && cd ..
+cd reporting-service && python -m pytest && cd ..
 
 # Integración (con "python run_dev.py --no-front" corriendo en otra terminal)
 python -m pytest integration_tests -v
 ```
 
-Resultado: **105 pruebas aprobadas** (97 unitarias y de API + 8 de integración).
+Resultado: **162 pruebas** (30 auth · 41 catalog · 76 sales · 6 reporting · 9 de integración).

@@ -3,18 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import tokens, users
 from app.api.errors import register_error_handlers
+from app.api.observabilidad import instrumentar
 from app.config import CORS_ORIGINS
-from app.infrastructure.database import SessionLocal, engine
+from app.infrastructure.database import init_database
 from app.infrastructure.orm_models import Base
 from app.infrastructure.seed import seed_users
 
 
-Base.metadata.create_all(
-    bind=engine
-)
-
-with SessionLocal() as session:
-    seed_users(session)
+init_database(Base.metadata, lambda session: seed_users(session))
 
 
 app = FastAPI(
@@ -33,6 +29,10 @@ app.add_middleware(
 )
 
 register_error_handlers(app)
+
+
+# Métricas para Prometheus (/metrics).
+instrumentar(app)
 
 
 api = APIRouter(prefix="/api/v1/auth")

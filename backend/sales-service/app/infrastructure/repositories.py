@@ -1,6 +1,6 @@
 from datetime import date, datetime, time, timedelta
 
-from sqlalchemy import case, func, or_
+from sqlalchemy import case, func, or_, literal_column
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.domain.models import (
@@ -53,6 +53,22 @@ def _to_order(db_order: OrderORM) -> Order:
             for l in db_order.lineas
         ],
     )
+
+
+def _parte_fecha(session, parte: str, columna):
+    """Día de la semana, hora o mes de una fecha, en SQLite (local) o PostgreSQL (Docker).
+
+    Ambos devuelven el día de la semana como 0 = domingo ... 6 = sábado.
+    """
+
+    if session.get_bind().dialect.name == "postgresql":
+        if parte == "mes":
+            # Formato como texto literal (no parámetro) para que el SELECT y el GROUP BY
+            # sean la misma expresión; si no, PostgreSQL rechaza la consulta.
+            return func.to_char(columna, literal_column("'YYYY-MM'"))
+        return func.extract("dow" if parte == "dia" else "hour", columna)
+
+    return func.strftime({"dia": "%w", "hora": "%H", "mes": "%Y-%m"}[parte], columna)
 
 
 def _date_filter(query, desde: date | None, hasta: date | None):
@@ -264,8 +280,7 @@ class SQLAlchemyMetricsRepository(MetricsRepository):
 
     def sales_by_weekday(self, desde: date | None, hasta: date | None) -> list[WeekdaySales]:
 
-        # En SQLite, strftime('%w') devuelve 0 = domingo ... 6 = sábado.
-        dia = func.strftime("%w", OrderORM.fecha)
+        dia = _parte_fecha(self.session, "dia", OrderORM.fecha)
 
         rows = _date_filter(
             self.session.query(dia, func.count(OrderORM.id_venta), func.sum(OrderORM.total)),
@@ -280,7 +295,7 @@ class SQLAlchemyMetricsRepository(MetricsRepository):
 
     def sales_by_hour(self, desde: date | None, hasta: date | None) -> list[HourSales]:
 
-        hora = func.strftime("%H", OrderORM.fecha)
+        hora = _parte_fecha(self.session, "hora", OrderORM.fecha)
 
         rows = _date_filter(
             self.session.query(hora, func.count(OrderORM.id_venta), func.sum(OrderORM.total)),
@@ -292,7 +307,7 @@ class SQLAlchemyMetricsRepository(MetricsRepository):
 
     def sales_by_month(self, desde: date | None, hasta: date | None) -> list[MonthSales]:
 
-        mes = func.strftime("%Y-%m", OrderORM.fecha)
+        mes = _parte_fecha(self.session, "mes", OrderORM.fecha)
 
         rows = _date_filter(
             self.session.query(mes, func.count(OrderORM.id_venta), func.sum(OrderORM.total)),
@@ -337,9 +352,12 @@ class SQLAlchemyMetricsRepository(MetricsRepository):
         )
 
         if desde is None and hasta is None:
-            # Sin rango de fechas no hace falta unir con ventas. "+ 0" evita que SQLite
+            # Sin rango de fechas no hace falta unir con ventas. En SQLite, "+ 0" evita que
             # recorra el índice de id_producto (más lento que leer la tabla completa).
-            query = self.session.query(*columnas).group_by(OrderLineORM.id_producto + 0)
+            # PostgreSQL no acepta ese truco (exige agrupar por la misma columna del SELECT).
+            es_sqlite = self.session.get_bind().dialect.name == "sqlite"
+            agrupar = OrderLineORM.id_producto + 0 if es_sqlite else OrderLineORM.id_producto
+            query = self.session.query(*columnas).group_by(agrupar)
         else:
             query = _date_filter(self._lines(*columnas), desde, hasta).group_by(OrderLineORM.id_producto)
 

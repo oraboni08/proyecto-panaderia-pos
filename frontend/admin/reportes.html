@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reportes · Pan del Valle</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="shell">
+    <nav class="side" id="side" aria-label="Menú principal"></nav>
+    <main class="main">
+      <div class="page-head">
+        <div>
+          <h1>Reportes</h1>
+          <p>Calculados por Apache Spark con todo el histórico de ventas guardado en HDFS</p>
+        </div>
+        <button class="btn" type="button" id="recargar"></button>
+      </div>
+
+      <!-- Cuándo corrió Spark y cuántos datos procesó -->
+      <section class="card" id="ejecucion" style="padding:16px 20px" aria-label="Última ejecución de Spark"></section>
+
+      <section class="kpis" id="kpis" aria-label="Indicadores del histórico"></section>
+
+      <section class="charts">
+        <div class="card chart-card wide">
+          <div class="ch"><div><h2 class="ct">Ingresos por mes</h2><p class="cs">Todo el histórico del data lake</p></div></div>
+          <div class="chart" id="ch-meses"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ventas por hora</h2><p class="cs">Histórico completo</p></div></div>
+          <div class="chart" id="ch-horas"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ventas por día de la semana</h2><p class="cs">Histórico completo</p></div></div>
+          <div class="chart" id="ch-dias"></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="ch"><div><h2 class="ct">Ingresos por categoría</h2><p class="cs">Histórico completo</p></div></div>
+          <div id="ch-categorias" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+
+        <div class="card chart-card tbl-card">
+          <div class="ch"><div><h2 class="ct">Clientes más frecuentes</h2><p class="cs">Sin contar Consumidor final</p></div></div>
+          <div class="tbl-wrap" id="tb-clientes"></div>
+        </div>
+
+        <div class="card chart-card tbl-card wide">
+          <div class="ch"><div><h2 class="ct">Top 10 productos</h2><p class="cs">Por unidades vendidas en todo el histórico</p></div></div>
+          <div class="tbl-wrap" id="tb-top"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/config.js"></script>
+  <script src="/js/session.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/graficas.js"></script>
+  <script src="/js/reportes.js"></script>
+</body>
+</html>

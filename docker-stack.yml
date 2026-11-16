@@ -1,0 +1,340 @@
+# Panadería POS en Docker Swarm.
+#
+#   Construir imágenes:  docker compose -f docker-stack.yml build
+#   Desplegar:           docker stack deploy -c docker-stack.yml panaderia
+#   (o todo junto con:   ./deploy/desplegar.sh)
+#
+# Swarm ignora la sección "build"; la usa "docker compose build" para crear las imágenes locales.
+
+x-servicio-api: &servicio-api
+  # pos_net: tráfico de la aplicación. monitoring_net: Prometheus lee /metrics.
+  networks: [pos_net, monitoring_net]
+  secrets: [db_password, jwt_secret]
+  deploy: &deploy-api
+    replicas: 2
+    restart_policy:
+      condition: any
+      delay: 5s
+    update_config:
+      parallelism: 1
+      delay: 10s
+      order: start-first
+      failure_action: rollback
+    rollback_config:
+      parallelism: 1
+      order: start-first
+
+x-entorno-api: &entorno-api
+  DB_HOST: postgres
+  DB_USER: panaderia
+  DB_PASSWORD_FILE: /run/secrets/db_password
+  JWT_SECRET_FILE: /run/secrets/jwt_secret
+
+services:
+
+  # ---------- Entrada: API Gateway + interfaz web ----------
+
+  gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    configs:
+      - source: gateway_conf
+        target: /etc/nginx/conf.d/default.conf
+    networks: [pos_net]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/gateway/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 64M }
+
+  frontend:
+    image: panaderia/frontend:latest
+    build: ./frontend
+    networks: [pos_net]
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 64M }
+
+  # ---------- Microservicios ----------
+
+  auth-service:
+    <<: *servicio-api
+    image: panaderia/auth-service:latest
+    build:
+      context: ./backend
+      dockerfile: auth-service/Dockerfile
+    environment:
+      <<: *entorno-api
+      DB_NAME: auth_db
+      ADMIN_PASSWORD_FILE: /run/secrets/admin_password
+      CAJERO_PASSWORD_FILE: /run/secrets/cajero_password
+    secrets: [db_password, jwt_secret, admin_password, cajero_password]
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 192M }
+
+  catalog-service:
+    <<: *servicio-api
+    image: panaderia/catalog-service:latest
+    build:
+      context: ./backend
+      dockerfile: catalog-service/Dockerfile
+    environment:
+      <<: *entorno-api
+      DB_NAME: catalog_db
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 192M }
+
+  sales-service:
+    <<: *servicio-api
+    image: panaderia/sales-service:latest
+    build:
+      context: ./backend
+      dockerfile: sales-service/Dockerfile
+    environment:
+      <<: *entorno-api
+      DB_NAME: sales_db
+      # Sales consulta a catalog por REST (comunicación síncrona entre servicios).
+      CATALOG_URL: http://catalog-service:8002
+    deploy:
+      <<: *deploy-api
+      resources:
+        # La carga inicial lee ~95.000 ventas del dataset; después usa mucho menos.
+        limits: { memory: 512M }
+
+  # ---------- Data lake: HDFS ----------
+  # Mismas imágenes del taller de HDFS (Hadoop 3.2.1). Configuración en deploy/hadoop/hadoop.env.
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    hostname: namenode
+    env_file: ./deploy/hadoop/hadoop.env
+    environment:
+      CLUSTER_NAME: panaderia
+    ports:
+      - "9870:9870"   # Interfaz web de HDFS (y WebHDFS)
+    volumes:
+      - hdfs_name:/hadoop/dfs/name
+    networks: [pos_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 512M }
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    hostname: datanode
+    env_file: ./deploy/hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    volumes:
+      - hdfs_data:/hadoop/dfs/data
+    networks: [pos_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 512M }
+
+  # Copia cada minuto las ventas nuevas a HDFS (/panaderia/ventas/mes=AAAA-MM/).
+  # UNA sola réplica: dos exportadores a la vez duplicarían las líneas.
+  hdfs-exporter:
+    image: panaderia/hdfs-exporter:latest
+    build:
+      context: ./backend
+      dockerfile: hdfs-exporter/Dockerfile
+    environment:
+      SALES_URL: http://sales-service:8003
+      WEBHDFS_URL: http://namenode:9870/webhdfs/v1
+      INTERVALO_SEGUNDOS: "60"
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+    secrets: [jwt_secret]
+    networks: [pos_net, monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 192M }
+
+  # ---------- Monitoreo ----------
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=3d
+    ports:
+      - "9090:9090"
+    configs:
+      - source: prometheus_conf_v2
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - prom_data:/prometheus
+    networks: [monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits: { memory: 256M }
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      # Para la demo: se puede ver el dashboard sin iniciar sesión (solo lectura).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/panaderia-pos.json
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_USERS_DEFAULT_LANGUAGE: es-ES
+    secrets: [grafana_password]
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/datasource.yml
+      - source: grafana_dashboards
+        target: /etc/grafana/provisioning/dashboards/dashboards.yml
+      - source: grafana_dashboard_pos_v2
+        target: /etc/grafana/dashboards/panaderia-pos.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks: [monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits: { memory: 256M }
+
+  # ---------- Procesamiento paralelo + CQRS (lado de lectura) ----------
+
+  # Lado de LECTURA de CQRS: solo consulta los reportes que calculó Spark (reports_db).
+  reporting-service:
+    <<: *servicio-api
+    image: panaderia/reporting-service:latest
+    build:
+      context: ./backend
+      dockerfile: reporting-service/Dockerfile
+    environment:
+      <<: *entorno-api
+      DB_NAME: reports_db
+    deploy:
+      <<: *deploy-api
+      resources:
+        limits: { memory: 160M }
+
+  # Job de Spark (PySpark, master local[*]). Queda con 0 réplicas para no gastar RAM;
+  # se ejecuta con ./deploy/correr_spark.sh (docker service scale panaderia_spark-job=1),
+  # lee las ventas de HDFS, calcula los reportes en paralelo y termina.
+  spark-job:
+    image: panaderia/spark-job:latest
+    build:
+      context: ./backend
+      dockerfile: spark-job/Dockerfile
+    environment:
+      HDFS_URL: hdfs://namenode:9000
+      DB_HOST: postgres
+      DB_NAME: reports_db
+      DB_USER: panaderia
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    ports:
+      - "4040:4040"   # Interfaz de Spark (solo mientras el job corre)
+    networks: [pos_net]
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: none
+      resources:
+        limits: { memory: 1200M }
+
+  # ---------- Persistencia ----------
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: panaderia
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: postgres
+      TZ: America/Bogota
+      PGTZ: America/Bogota
+    secrets: [db_password]
+    configs:
+      - source: postgres_init
+        target: /docker-entrypoint-initdb.d/init.sql
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks: [pos_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U panaderia -d postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits: { memory: 512M }
+
+networks:
+  pos_net:
+    driver: overlay
+    attachable: true
+  monitoring_net:
+    driver: overlay
+
+volumes:
+  pg_data:
+  hdfs_name:
+  hdfs_data:
+  prom_data:
+  grafana_data:
+
+configs:
+  gateway_conf:
+    file: ./deploy/gateway/nginx.conf
+  postgres_init:
+    file: ./deploy/postgres/init.sql
+  prometheus_conf_v2:
+    file: ./deploy/prometheus/prometheus.yml
+  grafana_datasource:
+    file: ./deploy/grafana/datasource.yml
+  grafana_dashboards:
+    file: ./deploy/grafana/dashboards.yml
+  grafana_dashboard_pos_v2:
+    file: ./deploy/grafana/panaderia-pos.json
+
+secrets:
+  db_password:
+    file: ./deploy/secrets/db_password.txt
+  jwt_secret:
+    file: ./deploy/secrets/jwt_secret.txt
+  admin_password:
+    file: ./deploy/secrets/admin_password.txt
+  cajero_password:
+    file: ./deploy/secrets/cajero_password.txt
+  grafana_password:
+    file: ./deploy/secrets/grafana_password.txt

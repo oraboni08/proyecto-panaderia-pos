@@ -1,0 +1,45 @@
+# Prometheus: cada 15 s lee /metrics de cada réplica de los microservicios.
+#
+# dns_sd_configs con "tasks.<servicio>": el DNS de Docker Swarm devuelve la IP de CADA
+# réplica (no la IP virtual del balanceador). Así cada réplica es un "target" distinto
+# y en Grafana se ve cuál se cae y cuál vuelve.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+
+  - job_name: auth-service
+    dns_sd_configs:
+      - names: [tasks.auth-service]
+        type: A
+        port: 8001
+
+  - job_name: catalog-service
+    dns_sd_configs:
+      - names: [tasks.catalog-service]
+        type: A
+        port: 8002
+
+  - job_name: sales-service
+    dns_sd_configs:
+      - names: [tasks.sales-service]
+        type: A
+        port: 8003
+
+  - job_name: reporting-service
+    dns_sd_configs:
+      - names: [tasks.reporting-service]
+        type: A
+        port: 8004
+
+  - job_name: hdfs-exporter
+    dns_sd_configs:
+      - names: [tasks.hdfs-exporter]
+        type: A
+        port: 8005
+
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]

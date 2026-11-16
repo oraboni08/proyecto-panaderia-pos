@@ -19,3 +19,6 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Secretos de Docker Swarm (se generan en cada equipo)
+deploy/secrets/*.txt

@@ -1,0 +1,8 @@
+# Grafana carga automáticamente los dashboards de esta carpeta.
+apiVersion: 1
+providers:
+  - name: panaderia
+    folder: Panadería POS
+    type: file
+    options:
+      path: /etc/grafana/dashboards

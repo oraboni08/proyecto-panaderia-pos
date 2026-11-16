@@ -199,6 +199,7 @@ const ICONS = {
   card: "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM2 10h20",
   cardc: "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM2 10h20M6 15h4",
   transfer: "M8 3L4 7l4 4M4 7h16M16 21l4-4l-4-4M20 17H4",
+  spark: "M13 2L3 14h9l-1 8l10-12h-9z",
 };
 
 function icon(name, size = 18, width = 1.8) {
@@ -328,6 +329,7 @@ function drawerHead(titulo, subtitulo = "") {
 
 const ADMIN_NAV = [
   { id: "dashboard", label: "Dashboard", href: "/admin/dashboard.html", icon: "dashboard" },
+  { id: "reportes", label: "Reportes (Spark)", href: "/admin/reportes.html", icon: "spark" },
   { id: "catalogo", label: "Catálogo", href: "/admin/catalogo.html", icon: "box" },
   { id: "clientes", label: "Clientes", href: "/admin/clientes.html", icon: "users" },
   { id: "historial", label: "Historial de ventas", href: "/admin/historial.html", icon: "receipt" },

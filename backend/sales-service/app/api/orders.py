@@ -1,3 +1,4 @@
+from prometheus_client import Counter
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,6 +14,19 @@ from app.domain.models import METODOS_PAGO, Order
 from app.domain.services import LineRequest, OrderService
 from app.infrastructure.security import TokenUser
 
+
+
+# Métricas de negocio para Prometheus/Grafana.
+VENTAS_REGISTRADAS = Counter(
+    "panaderia_ventas_total", "Ventas registradas en la caja", ["metodo_pago"]
+)
+INGRESOS_PESOS = Counter(
+    "panaderia_ingresos_pesos_total", "Pesos colombianos vendidos en la caja"
+)
+# Cada método de pago arranca en 0. Si la etiqueta naciera con la primera venta (ya en 1),
+# increase() de Prometheus no vería el salto 0 -> 1 y esa venta no aparecería en Grafana.
+for _metodo in METODOS_PAGO:
+    VENTAS_REGISTRADAS.labels(metodo_pago=_metodo)
 
 router = APIRouter(prefix="/orders", tags=["Ventas"])
 
@@ -64,6 +78,9 @@ def create_order(
         cajero=user.usuario,
         metodo_pago=data.metodo_pago,
     )
+
+    VENTAS_REGISTRADAS.labels(metodo_pago=order.metodo_pago).inc()
+    INGRESOS_PESOS.inc(order.total)
 
     return to_response(order)
 
