@@ -34,6 +34,12 @@ scrape_configs:
         type: A
         port: 8004
 
+  - job_name: hdfs-exporter
+    dns_sd_configs:
+      - names: [tasks.hdfs-exporter]
+        type: A
+        port: 8005
+
   - job_name: prometheus
     static_configs:
       - targets: [localhost:9090]

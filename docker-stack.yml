@@ -111,6 +111,67 @@ services:
         # La carga inicial lee ~95.000 ventas del dataset; después usa mucho menos.
         limits: { memory: 512M }
 
+  # ---------- Data lake: HDFS ----------
+  # Mismas imágenes del taller de HDFS (Hadoop 3.2.1). Configuración en deploy/hadoop/hadoop.env.
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    hostname: namenode
+    env_file: ./deploy/hadoop/hadoop.env
+    environment:
+      CLUSTER_NAME: panaderia
+    ports:
+      - "9870:9870"   # Interfaz web de HDFS (y WebHDFS)
+    volumes:
+      - hdfs_name:/hadoop/dfs/name
+    networks: [pos_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 512M }
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    hostname: datanode
+    env_file: ./deploy/hadoop/hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    volumes:
+      - hdfs_data:/hadoop/dfs/data
+    networks: [pos_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 512M }
+
+  # Copia cada minuto las ventas nuevas a HDFS (/panaderia/ventas/mes=AAAA-MM/).
+  # UNA sola réplica: dos exportadores a la vez duplicarían las líneas.
+  hdfs-exporter:
+    image: panaderia/hdfs-exporter:latest
+    build:
+      context: ./backend
+      dockerfile: hdfs-exporter/Dockerfile
+    environment:
+      SALES_URL: http://sales-service:8003
+      WEBHDFS_URL: http://namenode:9870/webhdfs/v1
+      INTERVALO_SEGUNDOS: "60"
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+    secrets: [jwt_secret]
+    networks: [pos_net, monitoring_net]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 10s
+      resources:
+        limits: { memory: 192M }
+
   # ---------- Monitoreo ----------
 
   prometheus:
@@ -122,7 +183,7 @@ services:
     ports:
       - "9090:9090"
     configs:
-      - source: prometheus_conf
+      - source: prometheus_conf_v2
         target: /etc/prometheus/prometheus.yml
     volumes:
       - prom_data:/prometheus
@@ -205,6 +266,8 @@ networks:
 
 volumes:
   pg_data:
+  hdfs_name:
+  hdfs_data:
   prom_data:
   grafana_data:
 
@@ -213,7 +276,7 @@ configs:
     file: ./deploy/gateway/nginx.conf
   postgres_init:
     file: ./deploy/postgres/init.sql
-  prometheus_conf:
+  prometheus_conf_v2:
     file: ./deploy/prometheus/prometheus.yml
   grafana_datasource:
     file: ./deploy/grafana/datasource.yml

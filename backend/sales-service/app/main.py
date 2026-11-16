@@ -1,7 +1,7 @@
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import customers, metrics, orders
+from app.api import customers, export, metrics, orders
 from app.api.errors import register_error_handlers
 from app.api.observabilidad import instrumentar
 from app.config import CORS_ORIGINS, DATASET_DIR
@@ -46,5 +46,6 @@ def health():
 api.include_router(customers.router)
 api.include_router(orders.router)
 api.include_router(metrics.router)
+api.include_router(export.router)
 
 app.include_router(api)

@@ -91,3 +91,36 @@ Docker Swarm. Cada reto tiene: qué pasó, por qué pasó y cómo se resolvió.
 - **Alta disponibilidad (2026-11-16):** con peticiones continuas al API se borró a la fuerza una réplica de `sales-service` (`docker rm -f`). **60 de 60 peticiones respondieron 200** y Swarm volvió a tener 2/2 réplicas en **11 segundos** (en `docker service ps` se ve `Failed … exit (137)` y luego la réplica nueva en `Running`).
 - **Rolling update:** el arreglo del top de productos se desplegó con `docker service update` sin cortar el servicio.
 - **Carga inicial con candado:** en los logs cada dataset lo carga una sola réplica (6 usuarios, 90 productos, 3.201 clientes, 94.758 ventas, 203.696 líneas).
+
+---
+
+## Paso 3 · HDFS y exportador de ventas
+
+### 14. Muchos archivos pequeños en HDFS
+- **Qué pasó:** la primera idea era un archivo CSV por día de ventas.
+- **Por qué es un problema:** el NameNode guarda en memoria la información de cada archivo y cada bloque. Con miles de archivos pequeños se llena su memoria y Spark tiene que abrir miles de archivos (el clásico *small files problem* de Hadoop). Solo el histórico habría generado unos 700 archivos.
+- **Solución:** agrupar por **mes** (`/panaderia/ventas/mes=AAAA-MM/`). El histórico queda en pocas decenas de archivos y, dentro de cada mes, cada ciclo del exportador agrega un archivo nuevo con las ventas del último minuto.
+
+### 15. No duplicar ni perder ventas si el exportador se reinicia
+- **Qué pasó:** si el contenedor del exportador se reinicia, no puede volver a copiar todo ni saltarse ventas.
+- **Solución:** el último id exportado se guarda **en el mismo HDFS** (`/panaderia/_estado/ultimo_id`), y se guarda *después* de escribir los archivos. Si falla a mitad de camino, el siguiente ciclo repite el bloque sobrescribiendo los mismos archivos (mismo nombre), así que no se duplica nada. Por la misma razón el exportador corre con **una sola réplica**.
+
+### 16. El exportador no debe leer la base de datos de ventas
+- **Qué pasó:** lo más rápido habría sido conectarse directo a `sales_db`.
+- **Por qué no:** rompe el patrón *database per service*, porque la base es solo de `sales-service`.
+- **Solución:** un endpoint nuevo, `GET /api/v1/sales/export/lines?after_id=…`, que devuelve las líneas por bloques. El exportador se autentica con un **token JWT de servicio** firmado con el mismo Docker secret.
+
+### 17. Los configs de Swarm no se pueden modificar
+- **Qué pasó:** al agregar el exportador a `prometheus.yml`, Swarm no deja actualizar un config que ya existe (los configs y secrets son inmutables).
+- **Solución:** versionar el nombre (`prometheus_conf` → `prometheus_conf_v2`). Así Swarm crea el config nuevo y actualiza el servicio con un rolling update.
+
+### 18. Swarm seguía corriendo la versión vieja de sales-service
+- **Qué pasó:** después de agregar el endpoint de exportación y reconstruir la imagen, el exportador recibía **404** en `/api/v1/sales/export/lines`.
+- **Por qué:** la imagen nueva tenía la misma etiqueta (`panaderia/sales-service:latest`). Para `docker stack deploy` el servicio "no cambió", así que no reemplazó las réplicas (ver reto 13).
+- **Solución:** forzar el rolling update con `docker service update --force --image panaderia/sales-service:latest panaderia_sales-service`. Mejora futura: etiquetar cada versión (`:v2`, `:v3`) en vez de usar `latest`.
+
+
+### Evidencias del paso 3 (2026-11-16)
+- **Carga del histórico a HDFS:** el exportador copió 203.706 líneas en 23 carpetas de mes (27 archivos, 19,3 MB). `hdfs fsck /panaderia/ventas` → `Status: HEALTHY`.
+- **De la caja a HDFS:** la venta 94765 (Daviplata) apareció en `/panaderia/ventas/mes=2026-11/lineas_203707_203708.csv` **36 segundos** después de registrarse.
+- **Reinicio sin duplicados:** se borró a la fuerza el contenedor del exportador. Swarm lo recreó en 11 s, retomó desde el id 203708 guardado en HDFS y no volvió a copiar nada (28 archivos en total).
