@@ -219,6 +219,18 @@ def test_ventas_de_hoy_por_fecha(client, cajero_headers):
     assert all(v["fecha"].startswith(hoy) for v in ventas)
 
 
+def test_admin_filtra_por_cajero_y_metodo_de_pago(client, admin_headers):
+    ventas = client.get(f"{BASE}/orders", params={"cajero": "jrengifo", "metodo_pago": "nequi", "limit": 30},
+                        headers=admin_headers).json()
+    assert len(ventas) == 30
+    assert all(v["cajero"] == "jrengifo" and v["metodo_pago"] == "nequi" for v in ventas)
+
+
+def test_cajero_no_puede_ver_ventas_de_otro_cajero(client, cajero_headers):
+    ventas = client.get(f"{BASE}/orders", params={"cajero": "jrengifo"}, headers=cajero_headers).json()
+    assert all(v["cajero"] == "cajero" for v in ventas)
+
+
 def test_historial_de_un_cliente(client, admin_headers, dataset):
     ventas = client.get(f"{BASE}/orders", params={"id_cliente": 1}, headers=admin_headers).json()
     assert len(ventas) > 0

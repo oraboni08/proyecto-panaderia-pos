@@ -215,8 +215,9 @@ class OrderService:
         cajero: str | None = None,
         id_cliente: int | None = None,
         limit: int | None = None,
+        metodo_pago: str | None = None,
     ) -> list[Order]:
-        return self.orders.list_all(desde, hasta, cajero, id_cliente, limit)
+        return self.orders.list_all(desde, hasta, cajero, id_cliente, limit, metodo_pago)
 
     def _build_line(self, linea: LineRequest) -> OrderLine:
 

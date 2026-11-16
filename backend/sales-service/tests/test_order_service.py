@@ -55,7 +55,7 @@ class InMemoryOrders(OrderRepository):
     def get_by_id(self, order_id):
         return next((o for o in self.saved if o.id == order_id), None)
 
-    def list_all(self, desde=None, hasta=None, cajero=None, id_cliente=None, limit=None):
+    def list_all(self, desde=None, hasta=None, cajero=None, id_cliente=None, limit=None, metodo_pago=None):
         return [o for o in self.saved if cajero is None or o.cajero == cajero]
 
 

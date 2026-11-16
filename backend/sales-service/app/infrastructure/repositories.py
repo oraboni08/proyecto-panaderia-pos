@@ -205,6 +205,7 @@ class SQLAlchemyOrderRepository(OrderRepository):
         cajero: str | None = None,
         id_cliente: int | None = None,
         limit: int | None = None,
+        metodo_pago: str | None = None,
     ) -> list[Order]:
 
         query = (
@@ -220,6 +221,9 @@ class SQLAlchemyOrderRepository(OrderRepository):
 
         if id_cliente is not None:
             query = query.filter(OrderORM.id_cliente == id_cliente)
+
+        if metodo_pago is not None:
+            query = query.filter(OrderORM.metodo_pago == metodo_pago)
 
         query = query.order_by(OrderORM.fecha.desc(), OrderORM.id_venta.desc())
 
