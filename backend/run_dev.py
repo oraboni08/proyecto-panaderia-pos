@@ -54,11 +54,14 @@ def apartar_bases_viejas() -> None:
         db = BACKEND_DIR / servicio / archivo
         if not db.exists():
             continue
+        # La conexión se cierra antes de renombrar: en Windows un archivo abierto no se puede mover.
+        con = sqlite3.connect(db)
         try:
-            with sqlite3.connect(db) as con:
-                vigente = con.execute(consulta).fetchone() is not None
+            vigente = con.execute(consulta).fetchone() is not None
         except sqlite3.Error:
             vigente = False
+        finally:
+            con.close()
         if not vigente:
             respaldo = db.with_name(f"{db.stem}_version_anterior_{time.strftime('%Y%m%d_%H%M%S')}.db")
             db.rename(respaldo)

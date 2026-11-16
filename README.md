@@ -112,6 +112,19 @@ pip install -r requirements-dev.txt
 python run_dev.py               # → http://127.0.0.1:8080
 ```
 
+La primera vez cada servicio crea su base en `backend/<servicio>/` y la llena desde `backend/dataset` (unos segundos).
+
+Para entrar, usa estos usuarios de desarrollo:
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `admin12345` |
+| Cajero | `mcastillo`, `jrengifo`, `lvalencia`, `dmosquera` o `cajero` | `cajero12345` |
+
+Si ya habías corrido una versión anterior del proyecto, `run_dev.py` detecta las bases locales con el modelo viejo. Las guarda como `*_version_anterior_<fecha>.db` y crea unas nuevas, así que no hay que borrar nada a mano.
+
+Las fotos de los productos están en `frontend/img/productos/<id>.jpg`. Para regenerarlas a partir de las cuadrículas `lote_NN.png`, corre `python frontend/img/recortar_fotos.py <carpeta>`.
+
 ## Pruebas
 
 ```bash
